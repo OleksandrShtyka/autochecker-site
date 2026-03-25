@@ -33,7 +33,9 @@ const SECURITY = [
   ["Bounded I/O",                "HTTP client enforces 10 MB response limit. History files are size-guarded."                 ],
 ] as const;
 
-const INSTALL_CMD  = "code --install-extension autochecker-0.0.11.vsix";
+const VSIX_FILE    = "https://github.com/OleksandrShtyka/auto-check-standard/releases/download/0.0.11/autochecker-0.0.11.vsix";
+const VSIX_NAME    = "autochecker-0.0.11.vsix";
+const INSTALL_CMD  = `code --install-extension ${VSIX_NAME}`;
 const MARKETPLACE  = "https://marketplace.visualstudio.com/items?itemName=shtyka-dev.autochecker";
 const GITHUB       = "https://github.com/OleksandrShtyka/auto-check-standard";
 
@@ -110,6 +112,19 @@ export default function Home() {
               <code className={styles.terminalCmd}>{INSTALL_CMD}</code>
               <span className={styles.cursor} />
             </pre>
+          </div>
+
+          <div className={styles.downloadRow}>
+            <span className={styles.downloadDivider}>or download directly</span>
+            <a
+              href={VSIX_FILE}
+              download={VSIX_NAME}
+              className={styles.downloadBtn}
+            >
+              <span className={styles.downloadIcon}>↓</span>
+              Download .vsix
+              <span className={styles.downloadMeta}>56 KB</span>
+            </a>
           </div>
         </div>
       </section>
