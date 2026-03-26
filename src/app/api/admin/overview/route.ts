@@ -6,19 +6,28 @@ import { jsonError } from "@/lib/http";
 export const runtime = "nodejs";
 
 export async function GET() {
-  const session = await getSession();
-  if (!session) {
-    return jsonError("Authorization required.", 401);
-  }
+  try {
+    const session = await getSession();
+    if (!session) {
+      return jsonError("Authorization required.", 401);
+    }
 
-  if (session.role !== "ADMIN") {
-    return jsonError("Admin access required.", 403);
-  }
+    if (session.role !== "ADMIN") {
+      return jsonError("Admin access required.", 403);
+    }
 
-  return NextResponse.json({
-    ok: true,
-    viewer: session,
-    counts: await database.getAdminCounts(),
-    suggestions: await database.listAdminSuggestions(),
-  });
+    const suggestions = await database.listAdminSuggestions();
+    const counts = {
+      total: suggestions.length,
+      new: suggestions.filter((s) => s.status === "NEW").length,
+      reviewing: suggestions.filter((s) => s.status === "REVIEWING").length,
+      planned: suggestions.filter((s) => s.status === "PLANNED").length,
+      shipped: suggestions.filter((s) => s.status === "SHIPPED").length,
+      rejected: suggestions.filter((s) => s.status === "REJECTED").length,
+    };
+
+    return NextResponse.json({ ok: true, viewer: session, counts, suggestions });
+  } catch (error) {
+    return jsonError(error instanceof Error ? error.message : "Server error.", 500);
+  }
 }

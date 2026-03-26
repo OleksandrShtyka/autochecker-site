@@ -25,8 +25,8 @@ export async function POST(request: Request) {
       return jsonError("Enter a valid email address.");
     }
 
-    if (password.length < 6) {
-      return jsonError("Password must be at least 6 characters long.");
+    if (password.length < 12) {
+      return jsonError("Password must be at least 12 characters long.");
     }
 
     if (await database.findUserByEmail(email)) {
@@ -34,9 +34,7 @@ export async function POST(request: Request) {
     }
 
     const adminEmail = normalizeEmail(process.env.ADMIN_EMAIL ?? "");
-    const isFirstUser = (await database.countUsers()) === 0;
-    const authRole =
-      (adminEmail && adminEmail === email) || isFirstUser ? "ADMIN" : "USER";
+    const authRole = adminEmail && adminEmail === email ? "ADMIN" : "USER";
 
     const user = await database.createUser({
       email,

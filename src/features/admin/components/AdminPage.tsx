@@ -31,7 +31,7 @@ type AdminPayload = {
 
 export function AdminPage() {
   const router = useRouter();
-  const { theme, toggleTheme } = useTheme();
+  const { theme } = useTheme();
   const { dismissToast, pushToast, toastLifetimeMs, toasts } = useToastQueue();
   const [isLoading, setIsLoading] = useState(true);
   const [isForbidden, setIsForbidden] = useState(false);
@@ -143,26 +143,7 @@ export function AdminPage() {
             Back to Cabinet
           </button>
 
-          <div className={homeStyles.cabinetPageActions}>
-            <button
-              type="button"
-              className={homeStyles.themeToggle}
-              onClick={toggleTheme}
-              aria-label="Toggle theme"
-            >
-              <span className={homeStyles.themeToggleTrack}>
-                <span
-                  className={cx(
-                    homeStyles.themeToggleThumb,
-                    theme === "dark" && homeStyles.themeToggleThumbDark
-                  )}
-                />
-              </span>
-              <span className={homeStyles.themeToggleLabel}>
-                {theme === "dark" ? "Dark" : "Light"}
-              </span>
-            </button>
-          </div>
+          <div className={homeStyles.cabinetPageActions} />
         </div>
 
         {isLoading ? (

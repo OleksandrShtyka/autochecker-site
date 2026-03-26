@@ -1,4 +1,4 @@
-import type { Feature, NavItem, PreviewItem, SecurityItem, Stat } from "./types";
+import type { Feature, NavItem, PreviewItem, SecurityItem, SocialLink, Stat } from "./types";
 
 export const FEATURES: Feature[] = [
   {
@@ -170,6 +170,7 @@ export const NAV_ITEMS: NavItem[] = [
   { id: "top", label: "Overview" },
   { id: "features", label: "Features" },
   { id: "security", label: "Security" },
+  { id: "social", label: "Social" },
 ];
 
 export const CABINET_ROLE_OPTIONS = [
@@ -198,8 +199,54 @@ export const SUGGESTION_STATUS_OPTIONS = [
   "REJECTED",
 ] as const;
 
-export const VSIX_FILE = "https://github.com/OleksandrShtyka/auto-check-standard/releases/download/0.0.11/autochecker-0.0.11.vsix";
-export const VSIX_NAME = "autochecker-0.0.11.vsix";
+export const SOCIAL_LINKS: SocialLink[] = [
+  {
+    id: "github",
+    label: "GitHub",
+    handle: "@OleksandrShtyka",
+    url: "https://github.com/OleksandrShtyka",
+    accent: "#e6edf3",
+  },
+  {
+    id: "linkedin",
+    label: "LinkedIn",
+    handle: "@oleksandr-shtyka",
+    url: "https://www.linkedin.com/in/oleksandr-shtyka-56424136b",
+    accent: "#0a66c2",
+  },
+  {
+    id: "x",
+    label: "X",
+    handle: "@sasha2005tt",
+    url: "https://x.com/sasha2005tt",
+    accent: "#e7e9ea",
+  },
+  {
+    id: "instagram",
+    label: "Instagram",
+    handle: "@sasha2005tt",
+    url: "https://www.instagram.com/sasha2005tt",
+    accent: "#e1306c",
+  },
+  {
+    id: "tiktok",
+    label: "TikTok",
+    handle: "@sasha23h1",
+    url: "https://www.tiktok.com/@sasha23h1",
+    accent: "#69c9d0",
+  },
+  {
+    id: "threads",
+    label: "Threads",
+    handle: "@sasha2005tt",
+    url: "https://www.threads.com/@sasha2005tt",
+    accent: "#a8a8a8",
+  },
+];
+
+export const RELEASE_VERSION = "0.0.11";
+export const VSIX_NAME = `autochecker-${RELEASE_VERSION}.vsix`;
+export const VSIX_FILE = `https://github.com/OleksandrShtyka/auto-check-standard/releases/download/${RELEASE_VERSION}/${VSIX_NAME}`;
 export const INSTALL_CMD = `code --install-extension ${VSIX_NAME}`;
 export const MARKETPLACE = "https://marketplace.visualstudio.com/items?itemName=shtyka-dev.autochecker";
 export const GITHUB = "https://github.com/OleksandrShtyka/auto-check-standard";

@@ -14,15 +14,17 @@ export function FeaturesSection({
   return (
     <section className={styles.features} id="features">
       <div className={styles.sectionHeader}>
-        <span className={styles.sectionTag}>Feature matrix</span>
-        <h2 className={styles.sectionTitle}>
-          Tap a glass card,
-          <span className={styles.sectionMuted}> open the deeper story.</span>
-        </h2>
-        <p className={styles.sectionSubtitle}>
-          Кожна картка тепер клікабельна: натискаєш на функцію і бачиш красиве
-          меню з поясненням, для чого вона потрібна і що саме дає у реальній роботі.
-        </p>
+        <div className={styles.sectionHeaderPanel}>
+          <span className={styles.sectionTag}>Feature matrix</span>
+          <h2 className={styles.sectionTitle}>
+            Tap a glass card,
+            <span className={styles.sectionMuted}> open the deeper story.</span>
+          </h2>
+          <p className={styles.sectionSubtitle}>
+            Кожна картка тепер клікабельна: натискаєш на функцію і бачиш красиве
+            меню з поясненням, для чого вона потрібна і що саме дає у реальній роботі.
+          </p>
+        </div>
       </div>
 
       <div className={styles.grid}>

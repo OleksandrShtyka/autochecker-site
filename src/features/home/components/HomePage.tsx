@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import {
   FEATURES,
@@ -10,7 +10,9 @@ import {
   NAV_ITEMS,
   PREVIEW_STACK,
   QUICK_PILLS,
+  RELEASE_VERSION,
   SECURITY,
+  SOCIAL_LINKS,
   STATS,
   VSCODE_MAC_URL,
   VSIX_FILE,
@@ -33,13 +35,15 @@ import { FeaturesSection } from "./FeaturesSection";
 import { HeroSection } from "./HeroSection";
 import { HomeNav } from "./HomeNav";
 import { SecuritySection } from "./SecuritySection";
+import { SocialSection } from "./SocialSection";
 import { StatsSection } from "./StatsSection";
 import { ToastStack } from "./ToastStack";
 
 export function HomePage() {
   const router = useRouter();
+  const [isMounted, setIsMounted] = useState(false);
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
-  const { theme, toggleTheme } = useTheme();
+  const { theme } = useTheme();
   const { dismissToast, pushToast, toastLifetimeMs, toasts } = useToastQueue();
   const { activeSection, scrollToSection } = useActiveSection(NAV_ITEMS);
   const { navRefs, navTrackRef, indicator } = useNavIndicator(activeSection, theme);
@@ -83,6 +87,10 @@ export function HomePage() {
     router.push("/cabinet");
   };
 
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
+
   return (
     <main className={styles.main} data-theme={theme}>
       <div className={styles.bgMesh} />
@@ -93,62 +101,66 @@ export function HomePage() {
         <div className={cx(styles.light, styles.lightThree)} />
       </div>
 
-      <ToastStack
-        lifetimeMs={toastLifetimeMs}
-        onDismiss={dismissToast}
-        toasts={toasts}
-      />
-      <DownloadOverlay state={downloadState} />
-      <FeatureModal
-        feature={selectedFeature}
-        title={selectedFeatureTitle}
-        onClose={closeFeature}
-      />
-      <CabinetAuthModal
-        authForm={authForm}
-        authMessage={authMessage}
-        authMode={authMode}
-        isOpen={isAuthModalOpen}
-        onAuthFieldChange={setAuthField}
-        onAuthModeChange={setAuthMode}
-        onClose={() => setIsAuthModalOpen(false)}
-        onSubmit={() => void submitCabinetAccess()}
-      />
+      {!isMounted ? null : (
+        <>
+          <ToastStack
+            lifetimeMs={toastLifetimeMs}
+            onDismiss={dismissToast}
+            toasts={toasts}
+          />
+          <DownloadOverlay state={downloadState} />
+          <FeatureModal
+            feature={selectedFeature}
+            title={selectedFeatureTitle}
+            onClose={closeFeature}
+          />
+          <CabinetAuthModal
+            authForm={authForm}
+            authMessage={authMessage}
+            authMode={authMode}
+            isOpen={isAuthModalOpen}
+            onAuthFieldChange={setAuthField}
+            onAuthModeChange={setAuthMode}
+            onClose={() => setIsAuthModalOpen(false)}
+            onSubmit={() => void submitCabinetAccess()}
+          />
 
-      <HomeNav
-        activeSection={activeSection}
-        isAuthenticated={isAuthenticated}
-        theme={theme}
-        navItems={NAV_ITEMS}
-        navIndicator={indicator}
-        navRefs={navRefs}
-        navTrackRef={navTrackRef}
-        onScrollToSection={scrollToSection}
-        onToggleTheme={toggleTheme}
-        onOpenCabinet={openCabinet}
-        onInstall={downloadVsix}
-        githubUrl={GITHUB}
-      />
+          <HomeNav
+            activeSection={activeSection}
+            isAuthenticated={isAuthenticated}
+            navItems={NAV_ITEMS}
+            navIndicator={indicator}
+            navRefs={navRefs}
+            navTrackRef={navTrackRef}
+            onScrollToSection={scrollToSection}
+            onOpenCabinet={openCabinet}
+            onInstall={downloadVsix}
+            githubUrl={GITHUB}
+            version={RELEASE_VERSION}
+          />
 
-      <HeroSection
-        installCommand={INSTALL_CMD}
-        marketplaceUrl={MARKETPLACE}
-        quickPills={QUICK_PILLS}
-        features={FEATURES}
-        previewStack={PREVIEW_STACK}
-        themeLabel={`${theme} theme`}
-        onDownloadVsix={downloadVsix}
-        onDownloadVSCode={downloadVSCode}
-        onOpenFeature={openFeature}
-      />
+          <HeroSection
+            installCommand={INSTALL_CMD}
+            marketplaceUrl={MARKETPLACE}
+            quickPills={QUICK_PILLS}
+            features={FEATURES}
+            previewStack={PREVIEW_STACK}
+            themeLabel={`${theme} theme`}
+            onDownloadVsix={downloadVsix}
+            onDownloadVSCode={downloadVSCode}
+            onOpenFeature={openFeature}
+          />
 
-      <StatsSection stats={STATS} />
-      <FeaturesSection features={FEATURES} onOpenFeature={openFeature} />
-      <SecuritySection securityItems={SECURITY} />
-      <CtaSection
-        onDownloadVsix={downloadVsix}
-        onDownloadVSCode={downloadVSCode}
-      />
+          <StatsSection stats={STATS} />
+          <FeaturesSection features={FEATURES} onOpenFeature={openFeature} />
+          <SecuritySection securityItems={SECURITY} />
+          <SocialSection links={SOCIAL_LINKS} />
+          <CtaSection
+            onDownloadVsix={downloadVsix}
+            onDownloadVSCode={downloadVSCode}
+          />
+        </>
+      )}
     </main>
   );
 }

@@ -5,7 +5,12 @@ import type { SessionUser } from "@/features/home/types";
 
 const SESSION_COOKIE_NAME = "autochecker_session";
 const SESSION_TTL_SECONDS = 60 * 60 * 24 * 7;
-const SESSION_SECRET = process.env.SESSION_SECRET ?? "dev-only-secret-change-me";
+const SESSION_SECRET = process.env.SESSION_SECRET ?? (() => {
+  if (process.env.NODE_ENV === "production") {
+    throw new Error("SESSION_SECRET environment variable is not set.");
+  }
+  return "dev-only-secret-change-me";
+})();
 
 type SessionPayload = SessionUser & {
   exp: number;

@@ -1,7 +1,7 @@
-@import url("https://fonts.googleapis.com/css2?family=Cabinet+Grotesk:wght@500;700;800&family=Satoshi:wght@400;500;700&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Cabinet+Grotesk:wght@500;700;800;900&family=Satoshi:wght@400;500;700&display=swap");
 
 :root {
-  --text-primary: #102844;
+  --text-primary: #0C1826;
 }
 
 *,
@@ -18,17 +18,53 @@ html {
 
 body {
   min-height: 100vh;
-  font-family: "Satoshi", sans-serif;
+  font-family: "Satoshi", system-ui, -apple-system, sans-serif;
   color: var(--text-primary);
-  background: #edf4fb;
+  background: #F4F8FD;
   -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
   text-rendering: optimizeLegibility;
   overflow-x: hidden;
+}
+
+html[data-theme="dark"],
+html[data-theme="dark"] body {
+  background:
+    radial-gradient(circle at top, rgba(32, 86, 136, 0.16), transparent 34%),
+    radial-gradient(circle at 85% 18%, rgba(20, 184, 166, 0.12), transparent 28%),
+    linear-gradient(180deg, #030610 0%, #050913 48%, #060c18 100%);
+  color-scheme: dark;
+}
+
+::-webkit-scrollbar {
+  width: 5px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(100, 185, 200, 0.28);
+  border-radius: 999px;
+}
+
+html[data-theme="dark"] ::-webkit-scrollbar-thumb {
+  background: rgba(120, 190, 255, 0.22);
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(52, 232, 200, 0.5);
 }
 
 a,
 button {
   -webkit-tap-highlight-color: transparent;
+}
+
+button,
+input,
+textarea,
+select {
+  font: inherit;
 }
 
 img,
@@ -38,6 +74,10 @@ svg {
 }
 
 ::selection {
-  background: rgba(45, 166, 159, 0.22);
-  color: #0d2e47;
+  background: rgba(46, 232, 200, 0.18);
+  color: inherit;
+}
+
+html[data-theme="dark"] ::selection {
+  background: rgba(125, 211, 252, 0.2);
 }

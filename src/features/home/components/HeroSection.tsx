@@ -1,8 +1,71 @@
 "use client";
 
+import { useEffect, useRef, useState } from "react";
 import styles from "../styles";
 import type { Feature, PreviewItem } from "../types";
 import { cx } from "../utils";
+
+const HERO_PHRASES = [
+  "Two moods. Smooth like glass.",
+  "61 commands. Zero noise.",
+  "Light · Dark · Flawless.",
+  "Live server. HTTP. Python.",
+  "One sidebar. Every tool.",
+];
+
+const TYPE_SPEED   = 50;
+const DELETE_SPEED = 25;
+const PAUSE_FULL   = 1800;
+const PAUSE_EMPTY  = 200;
+
+function AnimatedPhrase() {
+  const [displayed, setDisplayed] = useState("");
+
+  // All mutable loop state lives in refs — immune to stale closures and StrictMode
+  const textRef    = useRef("");
+  const phraseRef  = useRef(0);
+  const deletingRef = useRef(false);
+  const timerRef   = useRef<ReturnType<typeof setTimeout>>();
+
+  useEffect(() => {
+    function tick() {
+      const target = HERO_PHRASES[phraseRef.current];
+
+      if (!deletingRef.current) {
+        if (textRef.current.length < target.length) {
+          textRef.current = target.slice(0, textRef.current.length + 1);
+          setDisplayed(textRef.current);
+          timerRef.current = setTimeout(tick, TYPE_SPEED);
+        } else {
+          timerRef.current = setTimeout(() => {
+            deletingRef.current = true;
+            tick();
+          }, PAUSE_FULL);
+        }
+      } else {
+        if (textRef.current.length > 0) {
+          textRef.current = target.slice(0, textRef.current.length - 1);
+          setDisplayed(textRef.current);
+          timerRef.current = setTimeout(tick, DELETE_SPEED);
+        } else {
+          phraseRef.current = (phraseRef.current + 1) % HERO_PHRASES.length;
+          deletingRef.current = false;
+          timerRef.current = setTimeout(tick, PAUSE_EMPTY);
+        }
+      }
+    }
+
+    timerRef.current = setTimeout(tick, TYPE_SPEED);
+    return () => clearTimeout(timerRef.current);
+  }, []); // runs once — refs handle all state internally
+
+  return (
+    <span className={styles.heroPhrase}>
+      <span className={styles.gradientText}>{" "}{displayed}</span>
+      <span className={styles.typeCursor} aria-hidden="true" />
+    </span>
+  );
+}
 
 type HeroSectionProps = {
   installCommand: string;
@@ -30,21 +93,25 @@ export function HeroSection({
   return (
     <section className={styles.hero} id="top">
       <div className={styles.heroCopy}>
-        <div className={cx(styles.fadeInUp, styles.heroBadge)}>
-          <span className={styles.heroBadgeDot} />
-          <span>Liquid workflow for a crowded dev stack</span>
+        <div className={cx(styles.heroCopyPanel, styles.fadeInUp)}>
+          <div className={styles.heroBadge}>
+            <span className={styles.heroBadgeDot} />
+            <span>Liquid workflow for a crowded dev stack</span>
+          </div>
+
+          <h1 className={cx(styles.heroTitle, styles.fadeInUp, styles.d1)}>
+            One extension.
+            <span className={styles.heroPhraseRow}>
+              <AnimatedPhrase />
+            </span>
+          </h1>
+
+          <p className={cx(styles.heroSubtitle, styles.fadeInUp, styles.d2)}>
+            AutoChecker folds live server, HTTP requests, code quality, generators,
+            formatter tools and Python helpers into one polished VS Code panel with
+            a light and dark experience.
+          </p>
         </div>
-
-        <h1 className={cx(styles.heroTitle, styles.fadeInUp, styles.d1)}>
-          One extension.
-          <span className={styles.gradientText}> Two moods. Smooth like glass.</span>
-        </h1>
-
-        <p className={cx(styles.heroSubtitle, styles.fadeInUp, styles.d2)}>
-          AutoChecker folds live server, HTTP requests, code quality, generators,
-          formatter tools and Python helpers into one polished VS Code panel with
-          a light and dark experience.
-        </p>
 
         <div className={cx(styles.heroCtas, styles.fadeInUp, styles.d3)}>
           <button type="button" className={styles.btnPrimary} onClick={onDownloadVsix}>

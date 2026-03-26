@@ -115,6 +115,8 @@ export function useCabinet({ features }: UseCabinetOptions) {
           );
           setHistory(suggestionsPayload.suggestions);
         }
+      } catch {
+        // network or parse error on boot — silently degrade, user stays unauthenticated
       } finally {
         setIsBooting(false);
       }
@@ -140,23 +142,27 @@ export function useCabinet({ features }: UseCabinetOptions) {
   };
 
   const persistProfile = async (nextProfile: CabinetProfile) => {
-    const response = await fetch("/api/cabinet/profile", {
-      method: "PATCH",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      credentials: "include",
-      body: JSON.stringify(nextProfile),
-    });
+    try {
+      const response = await fetch("/api/cabinet/profile", {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        credentials: "include",
+        body: JSON.stringify(nextProfile),
+      });
 
-    if (!response.ok) {
-      const payload = await readJson<{ message?: string }>(response);
-      setAuthMessage(payload.message ?? "Profile update failed.");
-      return;
+      if (!response.ok) {
+        const payload = await readJson<{ message?: string }>(response);
+        setAuthMessage(payload.message ?? "Profile update failed.");
+        return;
+      }
+
+      const payload = await readJson<{ profile: CabinetProfile }>(response);
+      setProfile(payload.profile);
+    } catch {
+      setAuthMessage("Network error — profile changes could not be saved.");
     }
-
-    const payload = await readJson<{ profile: CabinetProfile }>(response);
-    setProfile(payload.profile);
   };
 
   const setProfileField = (field: keyof CabinetProfile, value: string) => {
@@ -253,10 +259,14 @@ export function useCabinet({ features }: UseCabinetOptions) {
   };
 
   const logout = async (): Promise<ActionFeedback> => {
-    await fetch("/api/auth/logout", {
-      method: "POST",
-      credentials: "include",
-    });
+    try {
+      await fetch("/api/auth/logout", {
+        method: "POST",
+        credentials: "include",
+      });
+    } catch {
+      // ignore network errors on logout — clear state regardless
+    }
 
     setSessionUser(null);
     setProfile(INITIAL_PROFILE);
@@ -274,44 +284,55 @@ export function useCabinet({ features }: UseCabinetOptions) {
   };
 
   const submitSuggestion = async (): Promise<ActionFeedback> => {
-    const response = await fetch("/api/cabinet/suggestions", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      credentials: "include",
-      body: JSON.stringify(suggestion),
-    });
+    try {
+      const response = await fetch("/api/cabinet/suggestions", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        credentials: "include",
+        body: JSON.stringify(suggestion),
+      });
 
-    const payload = await readJson<{
-      ok?: boolean;
-      message?: string;
-      suggestions?: SuggestionRecord[];
-    }>(response);
+      const payload = await readJson<{
+        ok?: boolean;
+        message?: string;
+        suggestions?: SuggestionRecord[];
+      }>(response);
 
-    if (!response.ok || !payload.suggestions) {
+      if (!response.ok || !payload.suggestions) {
+        const feedback = {
+          ok: false,
+          title: "Suggestion failed",
+          description:
+            payload.message ?? "Fill in title, description and impact before sending.",
+          tone: "error" as const,
+        };
+        setAuthMessage(feedback.description);
+        return feedback;
+      }
+
+      setHistory(payload.suggestions);
+      setSuggestion(INITIAL_SUGGESTION);
+
+      const feedback = {
+        ok: true,
+        title: "Suggestion sent",
+        description: "Your idea was saved to the backend and is now visible in the admin panel.",
+        tone: "success" as const,
+      };
+      setAuthMessage(feedback.description);
+      return feedback;
+    } catch (error) {
       const feedback = {
         ok: false,
         title: "Suggestion failed",
-        description:
-          payload.message ?? "Fill in title, description and impact before sending.",
+        description: error instanceof Error ? error.message : "Unexpected network error.",
         tone: "error" as const,
       };
       setAuthMessage(feedback.description);
       return feedback;
     }
-
-    setHistory(payload.suggestions);
-    setSuggestion(INITIAL_SUGGESTION);
-
-    const feedback = {
-      ok: true,
-      title: "Suggestion sent",
-      description: "Your idea was saved to the backend and is now visible in the admin panel.",
-      tone: "success" as const,
-    };
-    setAuthMessage(feedback.description);
-    return feedback;
   };
 
   return {

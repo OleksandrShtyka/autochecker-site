@@ -30,15 +30,17 @@ export function CabinetDashboard({
     <section className={styles.cabinet}>
       <div className={styles.cabinetShell}>
         <div className={styles.sectionHeader}>
-          <span className={styles.sectionTag}>Cabinet dashboard</span>
-          <h2 className={styles.sectionTitle}>
-            Personal workspace dashboard,
-            <span className={styles.sectionMuted}> feedback desk included.</span>
-          </h2>
-          <p className={styles.sectionSubtitle}>
-            Тут окрема сторінка кабінету: профіль користувача, персональні налаштування
-            та форма пропозицій для покращення розширення.
-          </p>
+          <div className={styles.sectionHeaderPanel}>
+            <span className={styles.sectionTag}>Cabinet dashboard</span>
+            <h2 className={styles.sectionTitle}>
+              Personal workspace dashboard,
+              <span className={styles.sectionMuted}> feedback desk included.</span>
+            </h2>
+            <p className={styles.sectionSubtitle}>
+              Тут окрема сторінка кабінету: профіль користувача, персональні налаштування
+              та форма пропозицій для покращення розширення.
+            </p>
+          </div>
         </div>
 
         <div className={styles.cabinetGrid}>

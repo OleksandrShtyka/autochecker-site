@@ -12,15 +12,17 @@ export function CtaSection({
   return (
     <section className={styles.cta}>
       <div className={styles.ctaInner}>
-        <span className={styles.sectionTag}>Ready to install</span>
-        <h2 className={styles.ctaTitle}>
-          Stop stacking tiny tools.
-          <span className={styles.gradientText}> Use one polished cockpit.</span>
-        </h2>
-        <p className={styles.ctaSubtitle}>
-          AutoChecker replaces a mess of separate extensions with one compact,
-          rounded workspace utility layer, and now also helps macOS users grab VS Code quickly.
-        </p>
+        <div className={styles.ctaCopyPanel}>
+          <span className={styles.sectionTag}>Ready to install</span>
+          <h2 className={styles.ctaTitle}>
+            Stop stacking tiny tools.
+            <span className={styles.gradientText}> Use one polished cockpit.</span>
+          </h2>
+          <p className={styles.ctaSubtitle}>
+            AutoChecker replaces a mess of separate extensions with one compact,
+            rounded workspace utility layer, and now also helps macOS users grab VS Code quickly.
+          </p>
+        </div>
         <div className={styles.ctaActions}>
           <button type="button" className={styles.btnPrimary} onClick={onDownloadVsix}>
             Download AutoChecker

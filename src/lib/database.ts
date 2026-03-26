@@ -34,6 +34,17 @@ type DbSuggestionRow = {
   updated_at: string;
 };
 
+type DbSuggestionWithUserRow = DbSuggestionRow & {
+  users: {
+    id: string;
+    email: string;
+    name: string;
+    job_role: string;
+  } | null;
+};
+
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
 const SUPABASE_URL =
   process.env.NEXT_PUBLIC_SUPABASE_URL ?? process.env.SUPABASE_URL ?? "";
 const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY ?? "";
@@ -117,21 +128,17 @@ function mapSuggestion(row: DbSuggestionRow): SuggestionRecord {
   };
 }
 
-function parseExactCount(contentRange: string | null) {
-  if (!contentRange || !contentRange.includes("/")) {
-    return 0;
-  }
-
-  const count = contentRange.split("/").at(-1);
-  return Number(count ?? 0);
-}
-
 async function findUsersByIds(userIds: string[]) {
   if (!userIds.length) {
     return [];
   }
 
-  const inFilter = userIds.map((id) => `"${id}"`).join(",");
+  const safeIds = userIds.filter((id) => UUID_RE.test(id));
+  if (!safeIds.length) {
+    return [];
+  }
+
+  const inFilter = safeIds.join(",");
   const query = new URLSearchParams({
     select: "id,email,name,password_hash,auth_role,usage,favorite_feature,job_role,created_at,updated_at",
     id: `in.(${inFilter})`,
@@ -143,21 +150,6 @@ async function findUsersByIds(userIds: string[]) {
 }
 
 export const database = {
-  async countUsers() {
-    const query = new URLSearchParams({
-      select: "id",
-      limit: "1",
-    });
-
-    const { response } = await supabaseRequest<DbUserRow[]>(
-      `users?${query.toString()}`,
-      {},
-      { countExact: true }
-    );
-
-    return parseExactCount(response.headers.get("content-range"));
-  },
-
   async findUserByEmail(email: string) {
     const query = new URLSearchParams({
       select: "id,email,name,password_hash,auth_role,usage,favorite_feature,job_role,created_at,updated_at",
@@ -280,32 +272,25 @@ export const database = {
 
   async listAdminSuggestions() {
     const query = new URLSearchParams({
-      select: "id,user_id,title,area,summary,impact,status,admin_note,created_at,updated_at",
+      select: "id,user_id,title,area,summary,impact,status,admin_note,created_at,updated_at,users(id,email,name,job_role)",
       order: "created_at.desc",
     });
 
-    const { data } = await supabaseRequest<DbSuggestionRow[]>(
+    const { data } = await supabaseRequest<DbSuggestionWithUserRow[]>(
       `suggestions?${query.toString()}`
     );
 
     const rows = data ?? [];
-    const uniqueUserIds = [...new Set(rows.map((item) => item.user_id))];
-    const users = await findUsersByIds(uniqueUserIds);
-    const userMap = new Map(users.map((user) => [user.id, user]));
-
-    return rows.map((item) => {
-      const user = userMap.get(item.user_id);
-      return {
-        ...mapSuggestion(item),
-        updatedAt: item.updated_at,
-        user: {
-          id: item.user_id,
-          name: user?.name ?? "Unknown user",
-          email: user?.email ?? "unknown@example.com",
-          role: user?.profile.role ?? "Unknown role",
-        },
-      } satisfies AdminSuggestionRecord;
-    });
+    return rows.map((item) => ({
+      ...mapSuggestion(item),
+      updatedAt: item.updated_at,
+      user: {
+        id: item.user_id,
+        name: item.users?.name ?? "Unknown user",
+        email: item.users?.email ?? "unknown@example.com",
+        role: item.users?.job_role ?? "Unknown role",
+      },
+    } satisfies AdminSuggestionRecord));
   },
 
   async updateSuggestionStatus(input: {

@@ -102,3 +102,11 @@ export type ActionFeedback = {
   description: string;
   tone: ToastTone;
 };
+
+export type SocialLink = {
+  id: string;
+  label: string;
+  handle: string;
+  url: string;
+  accent: string;
+};

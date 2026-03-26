@@ -1,0 +1,47 @@
+name: Update release version
+
+on:
+  # Triggered by the extension repo via repository_dispatch
+  repository_dispatch:
+    types: [extension-release]
+  # Manual fallback: Actions → Run workflow → enter version
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Version without v prefix (e.g. 0.0.12)"
+        required: true
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Resolve version
+        id: ver
+        run: |
+          if [ "${{ github.event_name }}" = "repository_dispatch" ]; then
+            RAW="${{ github.event.client_payload.version }}"
+          else
+            RAW="${{ inputs.version }}"
+          fi
+          # Strip leading v if present
+          echo "version=${RAW#v}" >> "$GITHUB_OUTPUT"
+
+      - name: Update RELEASE_VERSION in data.ts
+        run: |
+          VERSION="${{ steps.ver.outputs.version }}"
+          sed -i "s/^export const RELEASE_VERSION = \".*\";$/export const RELEASE_VERSION = \"$VERSION\";/" \
+            src/features/home/data.ts
+
+      - name: Commit and push
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add src/features/home/data.ts
+          git diff --cached --quiet && echo "No changes" && exit 0
+          git commit -m "chore: bump version to ${{ steps.ver.outputs.version }}"
+          git push

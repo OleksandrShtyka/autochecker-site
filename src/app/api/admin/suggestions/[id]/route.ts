@@ -18,37 +18,43 @@ export async function PATCH(
   request: Request,
   context: { params: Promise<{ id: string }> }
 ) {
-  const session = await getSession();
-  if (!session) {
-    return jsonError("Authorization required.", 401);
+  try {
+    const session = await getSession();
+    if (!session) {
+      return jsonError("Authorization required.", 401);
+    }
+
+    if (session.role !== "ADMIN") {
+      return jsonError("Admin access required.", 403);
+    }
+
+    const { id } = await context.params;
+    const body = (await request.json()) as {
+      status?: SuggestionStatus;
+      adminNote?: string;
+    };
+
+    const status = body.status;
+    const adminNote = body.adminNote?.trim() ?? "";
+
+    if (!status || !ALLOWED_STATUSES.includes(status)) {
+      return jsonError("Invalid suggestion status.");
+    }
+
+    await database.updateSuggestionStatus({ suggestionId: id, status, adminNote });
+
+    const suggestions = await database.listAdminSuggestions();
+    const counts = {
+      total: suggestions.length,
+      new: suggestions.filter((s) => s.status === "NEW").length,
+      reviewing: suggestions.filter((s) => s.status === "REVIEWING").length,
+      planned: suggestions.filter((s) => s.status === "PLANNED").length,
+      shipped: suggestions.filter((s) => s.status === "SHIPPED").length,
+      rejected: suggestions.filter((s) => s.status === "REJECTED").length,
+    };
+
+    return NextResponse.json({ ok: true, counts, suggestions });
+  } catch (error) {
+    return jsonError(error instanceof Error ? error.message : "Server error.", 500);
   }
-
-  if (session.role !== "ADMIN") {
-    return jsonError("Admin access required.", 403);
-  }
-
-  const { id } = await context.params;
-  const body = (await request.json()) as {
-    status?: SuggestionStatus;
-    adminNote?: string;
-  };
-
-  const status = body.status;
-  const adminNote = body.adminNote?.trim() ?? "";
-
-  if (!status || !ALLOWED_STATUSES.includes(status)) {
-    return jsonError("Invalid suggestion status.");
-  }
-
-  await database.updateSuggestionStatus({
-    suggestionId: id,
-    status,
-    adminNote,
-  });
-
-  return NextResponse.json({
-    ok: true,
-    counts: await database.getAdminCounts(),
-    suggestions: await database.listAdminSuggestions(),
-  });
 }

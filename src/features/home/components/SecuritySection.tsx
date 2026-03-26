@@ -11,11 +11,13 @@ export function SecuritySection({ securityItems }: SecuritySectionProps) {
     <section className={styles.security} id="security">
       <div className={styles.securityInner}>
         <div className={styles.sectionHeader}>
-          <span className={styles.sectionTag}>Security</span>
-          <h2 className={styles.sectionTitle}>
-            Smooth on the surface,
-            <span className={styles.sectionMuted}> careful under the hood.</span>
-          </h2>
+          <div className={styles.sectionHeaderPanel}>
+            <span className={styles.sectionTag}>Security</span>
+            <h2 className={styles.sectionTitle}>
+              Smooth on the surface,
+              <span className={styles.sectionMuted}> careful under the hood.</span>
+            </h2>
+          </div>
         </div>
 
         <div className={styles.securityGrid}>

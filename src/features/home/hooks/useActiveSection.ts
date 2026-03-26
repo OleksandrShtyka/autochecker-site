@@ -1,43 +1,57 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { NavItem } from "../types";
 
 export function useActiveSection(items: NavItem[], defaultSection = "top") {
   const [activeSection, setActiveSection] = useState(defaultSection);
+  const clickedRef = useRef(false);
+  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
-    const sections = items
-      .map((item) => document.getElementById(item.id))
-      .filter(Boolean) as HTMLElement[];
+    const getActive = () => {
+      const midpoint = window.innerHeight * 0.4;
 
-    if (!sections.length) {
-      return;
-    }
+      // Find the section whose top edge is closest to (but not past) the midpoint
+      let best = items[0].id;
+      let bestDist = Infinity;
 
-    const observer = new IntersectionObserver(
-      (entries) => {
-        const visible = entries
-          .filter((entry) => entry.isIntersecting)
-          .sort((a, b) => b.intersectionRatio - a.intersectionRatio)[0];
-
-        if (visible?.target.id) {
-          setActiveSection(visible.target.id);
+      for (const item of items) {
+        const el = document.getElementById(item.id);
+        if (!el) continue;
+        const top = el.getBoundingClientRect().top;
+        // distance from the 40% viewport line
+        const dist = Math.abs(top - midpoint);
+        // prefer sections whose top is above the midpoint
+        if (top <= midpoint + 80 && dist < bestDist) {
+          bestDist = dist;
+          best = item.id;
         }
-      },
-      {
-        rootMargin: "-28% 0px -48% 0px",
-        threshold: [0.2, 0.35, 0.55, 0.75],
       }
-    );
 
-    sections.forEach((section) => observer.observe(section));
-    return () => observer.disconnect();
+      return best;
+    };
+
+    const onScroll = () => {
+      if (clickedRef.current) return;
+      setActiveSection(getActive());
+    };
+
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
   }, [items]);
 
   const scrollToSection = (id: string) => {
-    document.getElementById(id)?.scrollIntoView({ behavior: "smooth", block: "start" });
     setActiveSection(id);
+
+    // Lock scroll-based detection until the smooth scroll finishes (~900 ms)
+    clickedRef.current = true;
+    if (timerRef.current) clearTimeout(timerRef.current);
+    timerRef.current = setTimeout(() => {
+      clickedRef.current = false;
+    }, 900);
+
+    document.getElementById(id)?.scrollIntoView({ behavior: "smooth", block: "start" });
   };
 
   return { activeSection, setActiveSection, scrollToSection };

@@ -28,14 +28,18 @@ export function ToastStack({ lifetimeMs, onDismiss, toasts }: ToastStackProps) {
           )}
         >
           <div className={styles.toastTop}>
-            <div className={styles.toastMeta}>
-              <span className={styles.toastBadge}>
-                {toast.tone === "success"
-                  ? "Success"
-                  : toast.tone === "error"
-                    ? "Attention"
-                    : "Info"}
-              </span>
+            <span
+              className={cx(
+                styles.toastIcon,
+                toast.tone === "success" && styles.toastIconSuccess,
+                toast.tone === "error" && styles.toastIconError,
+                toast.tone === "info" && styles.toastIconInfo
+              )}
+              aria-hidden="true"
+            >
+              {toast.tone === "success" ? "✓" : toast.tone === "error" ? "✕" : "i"}
+            </span>
+            <div className={styles.toastContent}>
               <strong className={styles.toastTitle}>{toast.title}</strong>
               <p className={styles.toastText}>{toast.description}</p>
             </div>
