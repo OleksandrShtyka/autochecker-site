@@ -136,6 +136,47 @@ type ChatMessage = {
   content: string;
 };
 
+type RequestSettings = {
+  tone?: string;
+  language?: string;
+  name?: string;
+};
+
+function buildPrompt(settings?: RequestSettings): string {
+  let prompt = SYSTEM_PROMPT;
+
+  if (settings?.name && settings.name !== "Helper AI") {
+    prompt = prompt.replace(
+      "You are Helper AI",
+      `You are ${settings.name}`
+    );
+  }
+
+  const toneMap: Record<string, string> = {
+    friendly:     "Your tone is warm, friendly and conversational. Use informal language.",
+    professional: "Your tone is professional and formal. Use proper, polished language.",
+    technical:    "Your tone is technical and precise. Use developer terminology. Skip basic explanations and assume the user knows how to code.",
+    brief:        "Be extremely concise. Answer in 1-2 sentences maximum. No preamble, no filler.",
+  };
+  if (settings?.tone && toneMap[settings.tone]) {
+    prompt += `\n\n## Tone\n${toneMap[settings.tone]}`;
+  }
+
+  const langMap: Record<string, string> = {
+    uk: "Ukrainian", en: "English", ru: "Russian",
+    pl: "Polish", de: "German", fr: "French", es: "Spanish",
+  };
+  if (settings?.language && settings.language !== "auto" && langMap[settings.language]) {
+    // override the auto-detect instruction
+    prompt = prompt.replace(
+      "Always respond in the same language the user writes in.",
+      `Always respond in ${langMap[settings.language]}, regardless of the language the user writes in.`
+    );
+  }
+
+  return prompt;
+}
+
 export async function POST(request: Request) {
   const apiKey = process.env.GROQ_API_KEY;
   if (!apiKey) {
@@ -145,7 +186,7 @@ export async function POST(request: Request) {
     );
   }
 
-  const body = (await request.json()) as { messages?: ChatMessage[] };
+  const body = (await request.json()) as { messages?: ChatMessage[]; settings?: RequestSettings };
   const messages = body.messages;
 
   if (!Array.isArray(messages) || messages.length === 0) {
@@ -158,7 +199,7 @@ export async function POST(request: Request) {
     const completion = await groq.chat.completions.create({
       model: "llama-3.3-70b-versatile",
       messages: [
-        { role: "system", content: SYSTEM_PROMPT },
+        { role: "system", content: buildPrompt(body.settings) },
         ...messages.map((m) => ({ role: m.role, content: m.content })),
       ],
       max_tokens: 1024,

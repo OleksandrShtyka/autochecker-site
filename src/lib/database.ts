@@ -502,4 +502,10 @@ export const database = {
 
     return `${SUPABASE_URL}/storage/v1/object/public/avatars/${path}`;
   },
+
+  async deleteUser(userId: string): Promise<void> {
+    await supabaseRequest(`users?id=eq.${encodeURIComponent(userId)}`, {
+      method: "DELETE",
+    }, { allowEmpty: true });
+  },
 };

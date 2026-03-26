@@ -1,11 +1,12 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import QRCode from "qrcode";
 import { FEATURES } from "../data";
 import { useCabinet } from "../hooks/useCabinet";
 import { useTheme } from "../hooks/useTheme";
+import { useAISettings, type AITone, type AILanguage } from "../hooks/useAISettings";
 import { useToastQueue } from "../hooks/useToastQueue";
 import styles from "../styles";
 import { cx } from "../utils";
@@ -16,6 +17,7 @@ export function SettingsPage() {
   const router = useRouter();
   const [isMounted, setIsMounted] = useState(false);
   const { theme, toggleTheme } = useTheme();
+  const { settings: aiSettings, update: updateAI } = useAISettings();
   const { dismissToast, pushToast, toastLifetimeMs, toasts } = useToastQueue();
   const {
     accountData,
@@ -48,6 +50,46 @@ export function SettingsPage() {
   useEffect(() => {
     setTotpEnabled(accountData.totpEnabled);
   }, [accountData.totpEnabled]);
+
+  // ── delete account flow ────────────────────────────────────────────────────
+  const [deleteStep, setDeleteStep] = useState(0); // 0 = hidden, 1-5 = steps
+  const [deleteChecks, setDeleteChecks] = useState([false, false, false]);
+  const [deleteEmailInput, setDeleteEmailInput] = useState("");
+  const [deletePhraseInput, setDeletePhraseInput] = useState("");
+  const [deleteCountdown, setDeleteCountdown] = useState(5);
+  const [deleteCountdownRunning, setDeleteCountdownRunning] = useState(false);
+  const [deleteLoading, setDeleteLoading] = useState(false);
+
+  const resetDelete = useCallback(() => {
+    setDeleteStep(0);
+    setDeleteChecks([false, false, false]);
+    setDeleteEmailInput("");
+    setDeletePhraseInput("");
+    setDeleteCountdown(5);
+    setDeleteCountdownRunning(false);
+  }, []);
+
+  useEffect(() => {
+    if (!deleteCountdownRunning) return;
+    if (deleteCountdown <= 0) return;
+    const t = setTimeout(() => setDeleteCountdown((n) => n - 1), 1000);
+    return () => clearTimeout(t);
+  }, [deleteCountdown, deleteCountdownRunning]);
+
+  const handleDeleteAccount = async () => {
+    setDeleteLoading(true);
+    try {
+      const res = await fetch("/api/auth/delete", { method: "DELETE" });
+      if (!res.ok) throw new Error();
+      pushToast({ ok: true, title: "Account deleted", description: "Your account has been permanently removed.", tone: "info" });
+      router.push("/");
+    } catch {
+      pushToast({ ok: false, title: "Error", description: "Could not delete account. Please try again.", tone: "error" });
+      resetDelete();
+    } finally {
+      setDeleteLoading(false);
+    }
+  };
 
   // ── topbar dropdown ────────────────────────────────────────────────────────
   const [topbarDropdown, setTopbarDropdown] = useState(false);
@@ -640,6 +682,111 @@ export function SettingsPage() {
                   </div>
                 </div>
 
+                {/* ── AI Assistant ── */}
+                <div className={styles.settingsSection}>
+                  <div className={styles.settingsSectionLabel}>
+                    <span className={styles.settingsSectionIcon}>✦</span>
+                    AI Assistant
+                  </div>
+                  <div className={styles.settingsSectionBody}>
+                    <div className={styles.settingsCard}>
+                      <div className={styles.settingsCardHead}>
+                        <div className={styles.settingsCardHeadText}>
+                          <p className={styles.settingsCardTitle}>Helper AI</p>
+                          <p className={styles.settingsCardDesc}>
+                            Enable or disable the floating AI chat widget on the site.
+                          </p>
+                        </div>
+                        <span className={cx(styles.settingsCardBadge, aiSettings.enabled && styles.settingsCardBadgeGreen)}>
+                          {aiSettings.enabled ? "On" : "Off"}
+                        </span>
+                      </div>
+                      <div className={styles.settingsThemeRow}>
+                        <button
+                          type="button"
+                          className={cx(styles.settingsThemeBtn, aiSettings.enabled && styles.settingsThemeBtnActive)}
+                          onClick={() => updateAI({ enabled: true })}
+                        >
+                          <span className={styles.settingsThemeBtnIcon}>✦</span>
+                          Enabled
+                        </button>
+                        <button
+                          type="button"
+                          className={cx(styles.settingsThemeBtn, !aiSettings.enabled && styles.settingsThemeBtnActive)}
+                          onClick={() => updateAI({ enabled: false })}
+                        >
+                          <span className={styles.settingsThemeBtnIcon}>○</span>
+                          Disabled
+                        </button>
+                      </div>
+                    </div>
+
+                    <div className={styles.settingsCard}>
+                      <div className={styles.settingsCardHead}>
+                        <div className={styles.settingsCardHeadText}>
+                          <p className={styles.settingsCardTitle}>Customize</p>
+                          <p className={styles.settingsCardDesc}>
+                            Personalize the assistant name, response language, and conversation tone.
+                          </p>
+                        </div>
+                      </div>
+                      <div className={styles.settingsCardFields}>
+                        <label className={styles.field}>
+                          <span className={styles.fieldLabel}>Assistant Name</span>
+                          <input
+                            className={styles.fieldInput}
+                            value={aiSettings.name}
+                            onChange={(e) => updateAI({ name: e.target.value || "Helper AI" })}
+                            placeholder="Helper AI"
+                            maxLength={24}
+                          />
+                        </label>
+                        <label className={styles.field}>
+                          <span className={styles.fieldLabel}>Response Language</span>
+                          <select
+                            className={styles.fieldInput}
+                            value={aiSettings.language}
+                            onChange={(e) => updateAI({ language: e.target.value as AILanguage })}
+                            style={{ cursor: "pointer" }}
+                          >
+                            <option value="auto">Auto-detect</option>
+                            <option value="uk">Ukrainian</option>
+                            <option value="en">English</option>
+                            <option value="ru">Russian</option>
+                            <option value="pl">Polish</option>
+                            <option value="de">German</option>
+                            <option value="fr">French</option>
+                            <option value="es">Spanish</option>
+                          </select>
+                        </label>
+                      </div>
+                      <div className={styles.settingsCardFields} style={{ marginTop: "0.75rem" }}>
+                        <span className={styles.fieldLabel}>Tone</span>
+                        <div className={styles.aiTonePills} style={{ marginTop: "0.4rem" }}>
+                          {(
+                            [
+                              { value: "friendly",     label: "Friendly",      desc: "Warm & casual"   },
+                              { value: "professional", label: "Professional",   desc: "Formal language" },
+                              { value: "technical",    label: "Technical",      desc: "Dev-focused"     },
+                              { value: "brief",        label: "Brief",          desc: "Short answers"   },
+                            ] as { value: AITone; label: string; desc: string }[]
+                          ).map((o) => (
+                            <button
+                              key={o.value}
+                              type="button"
+                              className={cx(styles.aiTonePill, aiSettings.tone === o.value && styles.aiTonePillActive)}
+                              onClick={() => updateAI({ tone: o.value })}
+                            >
+                              <span className={styles.aiTonePillLabel}>{o.label}</span>
+                              <span className={styles.aiTonePillDesc}>{o.desc}</span>
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
                 {/* ── Danger Zone ── */}
                 <div className={styles.settingsSection}>
                   <div className={styles.settingsSectionLabel}>
@@ -658,11 +805,178 @@ export function SettingsPage() {
                         </div>
                         <span className={cx(styles.settingsCardBadge, styles.settingsCardBadgeDanger)}>Irreversible</span>
                       </div>
-                      <div className={styles.settingsCardActions}>
-                        <button type="button" className={styles.btnDanger} disabled title="Contact support to delete your account">
-                          Delete my account
-                        </button>
-                      </div>
+
+                      {/* Step indicator */}
+                      {deleteStep > 0 && (
+                        <div className={styles.deleteStepHeader}>
+                          <span className={styles.deleteStepLabel}>Step {deleteStep} of 5</span>
+                          <div className={styles.deleteStepDots}>
+                            {[1,2,3,4,5].map((n) => (
+                              <span
+                                key={n}
+                                className={cx(
+                                  styles.deleteStepDot,
+                                  n < deleteStep && styles.deleteStepDotDone,
+                                  n === deleteStep && styles.deleteStepDotActive,
+                                )}
+                              />
+                            ))}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Step 1 — warning */}
+                      {deleteStep === 1 && (
+                        <div className={styles.deleteStepBody}>
+                          <p className={styles.deleteStepTitle}>⚠ Are you sure you want to delete your account?</p>
+                          <ul className={styles.deleteWarningList}>
+                            <li>All your data will be <strong>permanently erased</strong></li>
+                            <li>Your cabinet, settings, and history will be gone</li>
+                            <li>You will be <strong>signed out immediately</strong></li>
+                            <li>This <strong>cannot be undone</strong> — there is no recovery</li>
+                          </ul>
+                          <div className={styles.deleteActions}>
+                            <button type="button" className={styles.btnDanger} onClick={() => setDeleteStep(2)}>
+                              I understand, continue →
+                            </button>
+                            <button type="button" className={styles.btnSecondary} onClick={resetDelete}>Cancel</button>
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Step 2 — checkboxes */}
+                      {deleteStep === 2 && (
+                        <div className={styles.deleteStepBody}>
+                          <p className={styles.deleteStepTitle}>Confirm what you are about to lose:</p>
+                          <div className={styles.deleteCheckList}>
+                            {[
+                              "My account and profile will be permanently deleted",
+                              "All my cabinet data, feedback, and settings will be lost",
+                              "I understand this action is irreversible and cannot be undone",
+                            ].map((text, i) => (
+                              <label key={i} className={styles.deleteCheckItem}>
+                                <input
+                                  type="checkbox"
+                                  className={styles.deleteCheckbox}
+                                  checked={deleteChecks[i]}
+                                  onChange={(e) => setDeleteChecks((prev) => {
+                                    const next = [...prev];
+                                    next[i] = e.target.checked;
+                                    return next;
+                                  })}
+                                />
+                                <span>{text}</span>
+                              </label>
+                            ))}
+                          </div>
+                          <div className={styles.deleteActions}>
+                            <button
+                              type="button"
+                              className={styles.btnDanger}
+                              onClick={() => setDeleteStep(3)}
+                              disabled={!deleteChecks.every(Boolean)}
+                            >
+                              Continue →
+                            </button>
+                            <button type="button" className={styles.btnSecondary} onClick={resetDelete}>Cancel</button>
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Step 3 — confirm email */}
+                      {deleteStep === 3 && (
+                        <div className={styles.deleteStepBody}>
+                          <p className={styles.deleteStepTitle}>Type your email address to continue:</p>
+                          <p className={styles.deleteStepDesc}>
+                            Enter <strong>{sessionUser?.email}</strong> exactly as shown.
+                          </p>
+                          <input
+                            className={styles.fieldInput}
+                            type="email"
+                            placeholder={sessionUser?.email ?? "your@email.com"}
+                            value={deleteEmailInput}
+                            onChange={(e) => setDeleteEmailInput(e.target.value)}
+                            autoComplete="off"
+                          />
+                          <div className={styles.deleteActions}>
+                            <button
+                              type="button"
+                              className={styles.btnDanger}
+                              onClick={() => setDeleteStep(4)}
+                              disabled={deleteEmailInput.trim().toLowerCase() !== (sessionUser?.email ?? "").toLowerCase()}
+                            >
+                              Continue →
+                            </button>
+                            <button type="button" className={styles.btnSecondary} onClick={resetDelete}>Cancel</button>
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Step 4 — type DELETE */}
+                      {deleteStep === 4 && (
+                        <div className={styles.deleteStepBody}>
+                          <p className={styles.deleteStepTitle}>Type <strong>DELETE</strong> to confirm:</p>
+                          <p className={styles.deleteStepDesc}>
+                            This is your last chance to go back.
+                          </p>
+                          <input
+                            className={styles.fieldInput}
+                            placeholder="DELETE"
+                            value={deletePhraseInput}
+                            onChange={(e) => setDeletePhraseInput(e.target.value)}
+                            autoComplete="off"
+                          />
+                          <div className={styles.deleteActions}>
+                            <button
+                              type="button"
+                              className={styles.btnDanger}
+                              onClick={() => { setDeleteStep(5); setDeleteCountdownRunning(true); }}
+                              disabled={deletePhraseInput.trim() !== "DELETE"}
+                            >
+                              Continue →
+                            </button>
+                            <button type="button" className={styles.btnSecondary} onClick={resetDelete}>Cancel</button>
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Step 5 — countdown */}
+                      {deleteStep === 5 && (
+                        <div className={styles.deleteStepBody}>
+                          <p className={styles.deleteStepTitle}>Final confirmation</p>
+                          <p className={styles.deleteStepDesc}>
+                            {deleteCountdown > 0
+                              ? `Please wait ${deleteCountdown} second${deleteCountdown !== 1 ? "s" : ""}…`
+                              : "You can now permanently delete your account."}
+                          </p>
+                          <div className={styles.deleteActions}>
+                            <button
+                              type="button"
+                              className={styles.btnDanger}
+                              onClick={() => void handleDeleteAccount()}
+                              disabled={deleteCountdown > 0 || deleteLoading}
+                            >
+                              {deleteLoading
+                                ? "Deleting…"
+                                : deleteCountdown > 0
+                                  ? `Wait ${deleteCountdown}s…`
+                                  : "Permanently Delete Account"}
+                            </button>
+                            <button type="button" className={styles.btnSecondary} onClick={resetDelete} disabled={deleteLoading}>
+                              Cancel
+                            </button>
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Step 0 — initial button */}
+                      {deleteStep === 0 && (
+                        <div className={styles.settingsCardActions}>
+                          <button type="button" className={styles.btnDanger} onClick={() => setDeleteStep(1)}>
+                            Delete my account
+                          </button>
+                        </div>
+                      )}
                     </div>
                   </div>
                 </div>
