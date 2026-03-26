@@ -23,6 +23,8 @@ type HomeNavProps = {
   onScrollToSection: (id: string) => void;
   onOpenCabinet: () => void;
   onOpenDashboard: () => void;
+  onOpenSettings: () => void;
+  onOpenAdmin: () => void;
   onLogout: () => void;
   onInstall: () => void;
   githubUrl: string;
@@ -43,6 +45,8 @@ export function HomeNav({
   onScrollToSection,
   onOpenCabinet,
   onOpenDashboard,
+  onOpenSettings,
+  onOpenAdmin,
   onLogout,
   onInstall,
   githubUrl,
@@ -144,7 +148,7 @@ export function HomeNav({
                 <button
                   type="button"
                   className={styles.navDropdownItem}
-                  onClick={() => { setDropdownOpen(false); onOpenDashboard(); }}
+                  onClick={() => { setDropdownOpen(false); onOpenSettings(); }}
                 >
                   <span className={styles.navDropdownItemIcon}>◈</span>
                   Settings
@@ -154,7 +158,7 @@ export function HomeNav({
                   <button
                     type="button"
                     className={styles.navDropdownItem}
-                    onClick={() => { setDropdownOpen(false); onOpenDashboard(); }}
+                    onClick={() => { setDropdownOpen(false); onOpenAdmin(); }}
                   >
                     <span className={styles.navDropdownItemIcon}>⬡</span>
                     Admin Panel

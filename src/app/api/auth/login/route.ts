@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { clearSessionCookie, setSessionCookie, verifyPassword } from "@/lib/auth";
+import { clearSessionCookie, setPendingMfaCookie, setSessionCookie, verifyPassword } from "@/lib/auth";
 import { database } from "@/lib/database";
 import { jsonError, normalizeEmail } from "@/lib/http";
 
@@ -22,6 +22,13 @@ export async function POST(request: Request) {
     const user = await database.findUserByEmail(email);
     if (!user || !verifyPassword(password, user.passwordHash)) {
       return jsonError("Wrong email or password. Check your credentials and try again.", 401);
+    }
+
+    // If TOTP is enabled, issue a short-lived pending-MFA cookie instead of a full session
+    if (user.accountData.totpEnabled) {
+      const response = NextResponse.json({ ok: true, mfa_required: true });
+      setPendingMfaCookie(response, user.id);
+      return response;
     }
 
     const response = NextResponse.json({

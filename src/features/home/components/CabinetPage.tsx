@@ -148,9 +148,10 @@ export function CabinetPage() {
             <div className={styles.cabinetPageTopbar}>
               <button
                 type="button"
-                className={styles.navGhost}
+                className={styles.btnBack}
                 onClick={() => router.push("/")}
               >
+                <span className={styles.btnBackArrow}>←</span>
                 Back Home
               </button>
 
@@ -191,6 +192,15 @@ export function CabinetPage() {
                       </div>
 
                       <div className={styles.navDropdownDivider} />
+
+                      <button
+                        type="button"
+                        className={styles.navDropdownItem}
+                        onClick={() => { setTopbarDropdown(false); router.push("/settings"); }}
+                      >
+                        <span className={styles.navDropdownItemIcon}>◈</span>
+                        Settings
+                      </button>
 
                       {isAdmin ? (
                         <button

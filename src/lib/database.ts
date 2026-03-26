@@ -23,6 +23,8 @@ type DbUserRow = {
   google_email: string | null;
   github_id: string | null;
   github_username: string | null;
+  totp_secret: string | null;
+  totp_enabled: boolean;
   created_at: string;
   updated_at: string;
 };
@@ -54,7 +56,7 @@ const SUPABASE_URL =
 const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY ?? "";
 
 const USER_SELECT =
-  "id,email,name,password_hash,auth_role,usage,favorite_feature,job_role,avatar_url,google_id,google_email,github_id,github_username,created_at,updated_at";
+  "id,email,name,password_hash,auth_role,usage,favorite_feature,job_role,avatar_url,google_id,google_email,github_id,github_username,totp_secret,totp_enabled,created_at,updated_at";
 
 function assertSupabaseEnv() {
   if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) {
@@ -106,7 +108,7 @@ async function supabaseRequest<T>(
   };
 }
 
-function mapUser(row: DbUserRow): SessionUser & { passwordHash: string; profile: CabinetProfile; accountData: AccountData } {
+function mapUser(row: DbUserRow): SessionUser & { passwordHash: string; totpSecret: string | null; profile: CabinetProfile; accountData: AccountData } {
   return {
     id: row.id,
     email: row.email,
@@ -125,7 +127,9 @@ function mapUser(row: DbUserRow): SessionUser & { passwordHash: string; profile:
       googleEmail: row.google_email ?? "",
       connectedGithub: !!row.github_id,
       githubUsername: row.github_username ?? "",
+      totpEnabled: row.totp_enabled ?? false,
     },
+    totpSecret: row.totp_secret ?? null,
   };
 }
 
@@ -416,6 +420,61 @@ export const database = {
       shipped: suggestions.filter((item) => item.status === "SHIPPED").length,
       rejected: suggestions.filter((item) => item.status === "REJECTED").length,
     };
+  },
+
+  async setTotpSecret(userId: string, secret: string) {
+    const query = new URLSearchParams({ id: `eq.${userId}`, select: USER_SELECT });
+    const { data } = await supabaseRequest<DbUserRow[]>(
+      `users?${query.toString()}`,
+      { method: "PATCH", body: JSON.stringify({ totp_secret: secret, totp_enabled: false, updated_at: new Date().toISOString() }) },
+      { prefer: "return=representation" }
+    );
+    const rows = data ?? [];
+    return rows[0] ? mapUser(rows[0]) : null;
+  },
+
+  async enableTotp(userId: string) {
+    const query = new URLSearchParams({ id: `eq.${userId}`, select: USER_SELECT });
+    const { data } = await supabaseRequest<DbUserRow[]>(
+      `users?${query.toString()}`,
+      { method: "PATCH", body: JSON.stringify({ totp_enabled: true, updated_at: new Date().toISOString() }) },
+      { prefer: "return=representation" }
+    );
+    const rows = data ?? [];
+    return rows[0] ? mapUser(rows[0]) : null;
+  },
+
+  async disableTotp(userId: string) {
+    const query = new URLSearchParams({ id: `eq.${userId}`, select: USER_SELECT });
+    const { data } = await supabaseRequest<DbUserRow[]>(
+      `users?${query.toString()}`,
+      { method: "PATCH", body: JSON.stringify({ totp_secret: null, totp_enabled: false, updated_at: new Date().toISOString() }) },
+      { prefer: "return=representation" }
+    );
+    const rows = data ?? [];
+    return rows[0] ? mapUser(rows[0]) : null;
+  },
+
+  async updatePassword(userId: string, newPasswordHash: string) {
+    const query = new URLSearchParams({
+      id: `eq.${userId}`,
+      select: USER_SELECT,
+    });
+
+    const { data } = await supabaseRequest<DbUserRow[]>(
+      `users?${query.toString()}`,
+      {
+        method: "PATCH",
+        body: JSON.stringify({
+          password_hash: newPasswordHash,
+          updated_at: new Date().toISOString(),
+        }),
+      },
+      { prefer: "return=representation" }
+    );
+
+    const rows = data ?? [];
+    return rows[0] ? mapUser(rows[0]) : null;
   },
 
   async uploadAvatar(userId: string, data: ArrayBuffer, contentType: string) {

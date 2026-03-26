@@ -117,6 +117,45 @@ export function setSessionCookie(response: NextResponse, user: SessionUser) {
   });
 }
 
+// ── Pending MFA cookie ────────────────────────────────────────────────────────
+// Issued after password verification when the account has TOTP enabled.
+// Stores the user ID + expiry, HMAC-signed. Valid for 5 minutes.
+
+const MFA_COOKIE_NAME = "autochecker_mfa_pending";
+const MFA_TTL_SECONDS = 60 * 5;
+
+export function setPendingMfaCookie(response: NextResponse, userId: string) {
+  const payload = Buffer.from(JSON.stringify({ id: userId, exp: Date.now() + MFA_TTL_SECONDS * 1000 })).toString("base64url");
+  const sig = sign(payload);
+  response.cookies.set(MFA_COOKIE_NAME, `${payload}.${sig}`, {
+    httpOnly: true,
+    maxAge: MFA_TTL_SECONDS,
+    path: "/",
+    sameSite: "lax",
+    secure: process.env.NODE_ENV === "production",
+  });
+}
+
+export async function getPendingMfa(): Promise<string | null> {
+  const cookieStore = await cookies();
+  const token = cookieStore.get(MFA_COOKIE_NAME)?.value;
+  if (!token) return null;
+  const [payload, sig] = token.split(".");
+  if (!payload || !sig) return null;
+  if (sign(payload) !== sig) return null;
+  try {
+    const parsed = JSON.parse(Buffer.from(payload, "base64url").toString("utf8")) as { id: string; exp: number };
+    if (parsed.exp < Date.now()) return null;
+    return parsed.id;
+  } catch {
+    return null;
+  }
+}
+
+export function clearPendingMfaCookie(response: NextResponse) {
+  response.cookies.set(MFA_COOKIE_NAME, "", { httpOnly: true, expires: new Date(0), path: "/" });
+}
+
 export function clearSessionCookie(response: NextResponse) {
   response.cookies.set(SESSION_COOKIE_NAME, "", {
     httpOnly: true,

@@ -39,6 +39,7 @@ const INITIAL_ACCOUNT_DATA: AccountData = {
   googleEmail: "",
   connectedGithub: false,
   githubUsername: "",
+  totpEnabled: false,
 };
 
 type UseCabinetOptions = {
@@ -70,6 +71,8 @@ export function useCabinet({ features }: UseCabinetOptions) {
   const [authMessage, setAuthMessage] = useState("");
   const [sessionUser, setSessionUser] = useState<SessionUser | null>(null);
   const [isBooting, setIsBooting] = useState(true);
+  const [mfaPending, setMfaPending] = useState(false);
+  const [mfaCode, setMfaCode] = useState("");
 
   const defaultFavoriteFeature = features[0]?.title ?? "Sidebar Dashboard";
 
@@ -315,9 +318,21 @@ export function useCabinet({ features }: UseCabinetOptions) {
 
       const payload = await readJson<{
         ok: boolean;
+        mfa_required?: boolean;
         message?: string;
         user?: SessionUser;
       }>(response);
+
+      if (response.ok && payload.mfa_required) {
+        setMfaPending(true);
+        setMfaCode("");
+        return {
+          ok: true,
+          title: "Two-factor verification",
+          description: "Enter the 6-digit code from your authenticator app.",
+          tone: "info" as const,
+        };
+      }
 
       if (!response.ok || !payload.user) {
         const feedback = {
@@ -401,6 +416,8 @@ export function useCabinet({ features }: UseCabinetOptions) {
     setAccountData(INITIAL_ACCOUNT_DATA);
     setHistory([]);
     setSuggestion(INITIAL_SUGGESTION);
+    setMfaPending(false);
+    setMfaCode("");
 
     const feedback = {
       ok: true,
@@ -410,6 +427,56 @@ export function useCabinet({ features }: UseCabinetOptions) {
     };
     setAuthMessage(feedback.description);
     return feedback;
+  };
+
+  const submitMfa = async (): Promise<ActionFeedback> => {
+    try {
+      const response = await fetch("/api/auth/totp/verify", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ code: mfaCode }),
+      });
+
+      const payload = await readJson<{ ok?: boolean; message?: string; user?: SessionUser }>(response);
+
+      if (!response.ok || !payload.user) {
+        return {
+          ok: false,
+          title: "Verification failed",
+          description: payload.message ?? "Invalid or expired code.",
+          tone: "error" as const,
+        };
+      }
+
+      setMfaPending(false);
+      setMfaCode("");
+      setSessionUser(payload.user);
+      setAuthForm(INITIAL_AUTH_FORM);
+
+      const [profileRes] = await Promise.all([
+        fetch("/api/cabinet/profile", { method: "GET", credentials: "include", cache: "no-store" }),
+      ]);
+      if (profileRes.ok) {
+        const profilePayload = await readJson<{ profile: typeof profile; accountData: AccountData }>(profileRes);
+        setProfile(profilePayload.profile);
+        if (profilePayload.accountData) setAccountData(profilePayload.accountData);
+      }
+
+      return {
+        ok: true,
+        title: "Welcome back",
+        description: "Two-factor verification succeeded.",
+        tone: "success" as const,
+      };
+    } catch {
+      return {
+        ok: false,
+        title: "Network error",
+        description: "Could not reach the server.",
+        tone: "error" as const,
+      };
+    }
   };
 
   const submitSuggestion = async (): Promise<ActionFeedback> => {
@@ -473,6 +540,10 @@ export function useCabinet({ features }: UseCabinetOptions) {
     isAdmin,
     isAuthenticated,
     isBooting,
+    mfaPending,
+    mfaCode,
+    setMfaCode,
+    submitMfa,
     profile,
     sessionUser,
     setAuthField,

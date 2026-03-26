@@ -117,4 +117,5 @@ export type AccountData = {
   googleEmail: string;
   connectedGithub: boolean;
   githubUsername: string;
+  totpEnabled: boolean;
 };

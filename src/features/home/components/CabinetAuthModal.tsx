@@ -9,6 +9,10 @@ type CabinetAuthModalProps = {
   authMessage: string;
   authMode: AuthMode;
   isOpen: boolean;
+  mfaPending: boolean;
+  mfaCode: string;
+  onMfaCodeChange: (code: string) => void;
+  onMfaSubmit: () => void | Promise<void>;
   onAuthFieldChange: (field: keyof AuthForm, value: string) => void;
   onAuthModeChange: (mode: AuthMode) => void;
   onClose: () => void;
@@ -21,16 +25,76 @@ export function CabinetAuthModal({
   authMessage,
   authMode,
   isOpen,
+  mfaPending,
+  mfaCode,
+  onMfaCodeChange,
+  onMfaSubmit,
   onAuthFieldChange,
   onAuthModeChange,
   onClose,
   onSubmit,
   onGoogleLogin,
 }: CabinetAuthModalProps) {
-  if (!isOpen) {
-    return null;
+  if (!isOpen) return null;
+
+  // ── MFA step ──────────────────────────────────────────────────────────────
+  if (mfaPending) {
+    return (
+      <div className={styles.modalBackdrop} onClick={onClose}>
+        <div
+          className={cx(styles.modal, styles.authModal)}
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="mfa-title"
+          onClick={(e) => e.stopPropagation()}
+        >
+          <div className={styles.modalTop}>
+            <div className={styles.modalBadge}>
+              <span className={styles.modalIcon}>⬡</span>
+              <span>Two-factor auth</span>
+            </div>
+            <button className={styles.modalClose} onClick={onClose} aria-label="Close">✕</button>
+          </div>
+
+          <h3 id="mfa-title" className={styles.modalTitle}>
+            Verify your identity
+          </h3>
+          <p className={styles.modalLead}>
+            Open Google Authenticator and enter the 6-digit code for AutoChecker.
+          </p>
+
+          <div className={styles.mfaCodeWrap}>
+            <input
+              className={styles.mfaCodeInput}
+              type="text"
+              inputMode="numeric"
+              pattern="\d{6}"
+              maxLength={6}
+              placeholder="000000"
+              value={mfaCode}
+              onChange={(e) => onMfaCodeChange(e.target.value.replace(/\D/g, "").slice(0, 6))}
+              autoFocus
+              autoComplete="one-time-code"
+              onKeyDown={(e) => { if (e.key === "Enter") void onMfaSubmit(); }}
+            />
+          </div>
+
+          <button
+            type="button"
+            className={styles.btnPrimary}
+            onClick={onMfaSubmit}
+            disabled={mfaCode.length !== 6}
+          >
+            Verify
+          </button>
+
+          {authMessage ? <p className={styles.authMessage}>{authMessage}</p> : null}
+        </div>
+      </div>
+    );
   }
 
+  // ── Normal auth step ───────────────────────────────────────────────────────
   return (
     <div className={styles.modalBackdrop} onClick={onClose}>
       <div

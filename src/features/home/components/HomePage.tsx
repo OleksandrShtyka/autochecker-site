@@ -57,6 +57,10 @@ export function HomePage() {
     authMode,
     isAdmin,
     isAuthenticated,
+    mfaPending,
+    mfaCode,
+    setMfaCode,
+    submitMfa,
     sessionUser,
     setAuthField,
     setAuthMode,
@@ -81,14 +85,27 @@ export function HomePage() {
 
   const submitCabinetAccess = async () => {
     const feedback = await submitAuth();
-    pushToast(feedback);
 
-    if (!feedback.ok) {
+    if (feedback.tone === "info" && feedback.title === "Two-factor verification") {
+      // MFA required — keep modal open, switch to code step
       return;
     }
 
+    pushToast(feedback);
+
+    if (!feedback.ok) return;
+
     setIsAuthModalOpen(false);
     router.push("/cabinet");
+  };
+
+  const handleMfaSubmit = async () => {
+    const feedback = await submitMfa();
+    pushToast(feedback);
+    if (feedback.ok) {
+      setIsAuthModalOpen(false);
+      router.push("/cabinet");
+    }
   };
 
   const handleLogout = async () => {
@@ -128,6 +145,10 @@ export function HomePage() {
             authMessage={authMessage}
             authMode={authMode}
             isOpen={isAuthModalOpen}
+            mfaPending={mfaPending}
+            mfaCode={mfaCode}
+            onMfaCodeChange={setMfaCode}
+            onMfaSubmit={() => void handleMfaSubmit()}
             onAuthFieldChange={setAuthField}
             onAuthModeChange={setAuthMode}
             onClose={() => setIsAuthModalOpen(false)}
@@ -149,6 +170,8 @@ export function HomePage() {
             onScrollToSection={scrollToSection}
             onOpenCabinet={openCabinet}
             onOpenDashboard={() => router.push("/cabinet")}
+            onOpenSettings={() => router.push("/settings")}
+            onOpenAdmin={() => router.push("/admin")}
             onLogout={() => void handleLogout()}
             onInstall={downloadVsix}
             githubUrl={GITHUB}

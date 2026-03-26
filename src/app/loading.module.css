@@ -1,0 +1,323 @@
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+@keyframes shimmer {
+  0%   { background-position: 0% 50%; }
+  100% { background-position: 100% 50%; }
+}
+
+@keyframes lightShift {
+  0%, 100% { transform: translate3d(0, 0, 0) scale(1); }
+  33%       { transform: translate3d(24px, -28px, 0) scale(1.1); }
+  66%       { transform: translate3d(-16px, 12px, 0) scale(0.96); }
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+@keyframes orbitPulse {
+  0%, 100% { opacity: 0.6; transform: scale(1); }
+  50%       { opacity: 1;   transform: scale(1.12); }
+}
+
+@keyframes dotBounce {
+  0%, 80%, 100% { transform: scaleY(0.4); opacity: 0.4; }
+  40%            { transform: scaleY(1);   opacity: 1; }
+}
+
+@keyframes glowPulse {
+  0%, 100% { box-shadow: 0 0 32px rgba(10, 123, 114, 0.22), 0 0 64px rgba(10, 123, 114, 0.1); }
+  50%       { box-shadow: 0 0 56px rgba(10, 123, 114, 0.45), 0 0 100px rgba(37, 99, 235, 0.18); }
+}
+
+@keyframes logoSlideUp {
+  from { opacity: 0; transform: translateY(20px) scale(0.96); }
+  to   { opacity: 1; transform: translateY(0)    scale(1); }
+}
+
+@keyframes ringExpand {
+  0%   { transform: scale(0.88); opacity: 0; }
+  40%  { opacity: 1; }
+  100% { transform: scale(1.12); opacity: 0; }
+}
+
+/* ── Root shell ── */
+.root {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  isolation: isolate;
+
+  /* Light mode tokens (mirrored from base.module.css) */
+  --text-primary:     #1E3448;
+  --text-secondary:   rgba(30, 52, 72, 0.72);
+  --text-tertiary:    rgba(30, 52, 72, 0.46);
+  --bg-grad-start:    rgba(244, 248, 253, 1);
+  --bg-grad-mid:      rgba(232, 242, 252, 1);
+  --bg-grad-end:      rgba(220, 234, 248, 1);
+  --noise-dot:        rgba(30, 70, 110, 0.07);
+  --surface:          linear-gradient(160deg, rgba(255,255,255,0.97), rgba(236,247,255,0.88));
+  --surface-soft:     linear-gradient(160deg, rgba(255,255,255,0.94), rgba(228,243,255,0.76));
+  --surface-tint:     linear-gradient(135deg, rgba(255,255,255,0.55), rgba(255,255,255,0.12));
+  --surface-border:   rgba(200, 220, 240, 0.72);
+  --surface-shadow:   0 4px 24px rgba(60,110,160,0.08), 0 1px 4px rgba(60,110,160,0.06), inset 0 1px 0 rgba(255,255,255,0.98);
+  --accent-a:         #0A7B72;
+  --accent-b:         #2563EB;
+  --accent-c:         #0891B2;
+  --accent-d:         #EA580C;
+  --grid-line:        rgba(100, 150, 200, 0.055);
+
+  animation: fadeIn 0.35s ease both;
+}
+
+/* ── Background layers ── */
+.bg {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  background:
+    linear-gradient(var(--grid-line) 1px, transparent 1px),
+    linear-gradient(90deg, var(--grid-line) 1px, transparent 1px),
+    radial-gradient(circle at 15% 8%,  rgba(10,123,114,0.14) 0%, transparent 38%),
+    radial-gradient(circle at 85% 15%, rgba(37,99,235,0.10)  0%, transparent 36%),
+    radial-gradient(circle at 50% 92%, rgba(234,88,12,0.10)  0%, transparent 34%),
+    linear-gradient(180deg, var(--bg-grad-start) 0%, var(--bg-grad-mid) 50%, var(--bg-grad-end) 100%);
+  background-size: 68px 68px, 68px 68px, auto, auto, auto, 100% 100%;
+}
+
+.noise {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  opacity: 0.16;
+  background-image: radial-gradient(var(--noise-dot) 0.6px, transparent 0.6px);
+  background-size: 20px 20px;
+  pointer-events: none;
+}
+
+.lights {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.light {
+  position: absolute;
+  border-radius: 999px;
+  filter: blur(20px);
+  animation: lightShift 20s ease-in-out infinite;
+}
+
+.lightOne {
+  top: 2rem; left: -10rem;
+  width: 32rem; height: 32rem;
+  background: radial-gradient(circle, rgba(255,255,255,0.7) 0%, rgba(255,255,255,0) 70%);
+}
+
+.lightTwo {
+  top: 20rem; right: -10rem;
+  width: 38rem; height: 38rem;
+  background: radial-gradient(circle, rgba(46,232,200,0.28) 0%, rgba(46,232,200,0) 72%);
+  animation-duration: 24s;
+}
+
+.lightThree {
+  bottom: -10rem; left: 22%;
+  width: 34rem; height: 34rem;
+  background: radial-gradient(circle, rgba(96,165,250,0.22) 0%, rgba(96,165,250,0) 72%);
+  animation-duration: 17s;
+  animation-direction: reverse;
+}
+
+/* ── Center card ── */
+.card {
+  position: relative;
+  z-index: 3;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2.5rem;
+  padding: 3rem 3.5rem;
+  border-radius: 2.5rem;
+  border: 1px solid var(--surface-border);
+  background: var(--surface-soft), var(--surface-tint);
+  box-shadow: var(--surface-shadow);
+  animation: logoSlideUp 0.7s cubic-bezier(0.16, 1, 0.3, 1) 0.1s both;
+}
+
+/* ── Logo mark ── */
+.logoWrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 88px;
+  height: 88px;
+}
+
+.logoRing {
+  position: absolute;
+  inset: -6px;
+  border-radius: 50%;
+  border: 2px solid transparent;
+  background: linear-gradient(135deg, var(--accent-a), var(--accent-b), var(--accent-c)) border-box;
+  -webkit-mask: linear-gradient(#fff 0 0) padding-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: destination-out;
+  mask-composite: exclude;
+  animation: spin 2.8s linear infinite;
+}
+
+.logoRingPulse {
+  position: absolute;
+  inset: -6px;
+  border-radius: 50%;
+  border: 2px solid var(--accent-a);
+  opacity: 0;
+  animation: ringExpand 2.8s ease-out infinite;
+}
+
+.logoInner {
+  width: 88px;
+  height: 88px;
+  border-radius: 50%;
+  background: linear-gradient(135deg,
+    rgba(255,255,255,0.95) 0%,
+    rgba(188,252,240,0.9)  45%,
+    rgba(200,220,255,0.8)  100%
+  );
+  border: 1px solid rgba(255,255,255,0.7);
+  box-shadow: 0 8px 32px rgba(10,123,114,0.18), inset 0 1px 0 rgba(255,255,255,0.9);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: glowPulse 3s ease-in-out infinite;
+  font-family: "Cabinet Grotesk", sans-serif;
+  font-size: 2rem;
+  font-weight: 900;
+  letter-spacing: -0.06em;
+  background-clip: text;
+  -webkit-background-clip: text;
+  color: var(--accent-a);
+}
+
+/* ── Wordmark ── */
+.wordmark {
+  text-align: center;
+}
+
+.wordmarkTitle {
+  font-family: "Cabinet Grotesk", sans-serif;
+  font-size: clamp(1.5rem, 4vw, 2rem);
+  font-weight: 900;
+  letter-spacing: -0.045em;
+  line-height: 1;
+  display: inline-block;
+  background: linear-gradient(118deg,
+    var(--accent-a) 0%,
+    var(--accent-b) 38%,
+    var(--accent-c) 68%,
+    var(--accent-d) 100%
+  );
+  background-size: 240% 240%;
+  animation: shimmer 4s ease-in-out infinite alternate;
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.wordmarkSub {
+  margin-top: 0.45rem;
+  font-size: 0.8rem;
+  font-weight: 500;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-tertiary);
+}
+
+/* ── Dot loader ── */
+.dots {
+  display: flex;
+  align-items: flex-end;
+  gap: 6px;
+  height: 20px;
+}
+
+.dot {
+  width: 5px;
+  border-radius: 3px;
+  background: var(--accent-a);
+  animation: dotBounce 1.1s ease-in-out infinite;
+}
+
+.dot:nth-child(1) { height: 14px; animation-delay: 0s;    background: var(--accent-a); }
+.dot:nth-child(2) { height: 20px; animation-delay: 0.18s; background: var(--accent-b); }
+.dot:nth-child(3) { height: 14px; animation-delay: 0.36s; background: var(--accent-c); }
+.dot:nth-child(4) { height: 20px; animation-delay: 0.54s; background: var(--accent-d); }
+.dot:nth-child(5) { height: 14px; animation-delay: 0.72s; background: var(--accent-a); }
+
+/* ── Dark mode overrides ── */
+@media (prefers-color-scheme: dark) {
+  .root {
+    --text-primary:   #f8fbff;
+    --text-secondary: #d2ddeb;
+    --text-tertiary:  #9fb1c5;
+    --bg-grad-start:  #0a0f18;
+    --bg-grad-mid:    #0c121d;
+    --bg-grad-end:    #101826;
+    --noise-dot:      rgba(255,255,255,0.02);
+    --surface:        linear-gradient(180deg, #182334, #141f2f);
+    --surface-soft:   linear-gradient(180deg, #1c283a, #162234);
+    --surface-tint:   linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0));
+    --surface-border: rgba(255,255,255,0.1);
+    --surface-shadow: 0 12px 32px rgba(0,0,0,0.35), 0 2px 10px rgba(0,0,0,0.24);
+    --accent-a:       #7cc7ff;
+    --accent-b:       #5d9dff;
+    --accent-c:       #49d2c2;
+    --accent-d:       #8cb5ff;
+    --grid-line:      rgba(255,255,255,0.03);
+  }
+
+  .bg {
+    background:
+      linear-gradient(var(--grid-line) 1px, transparent 1px),
+      linear-gradient(90deg, var(--grid-line) 1px, transparent 1px),
+      radial-gradient(circle at 15% 0%,  rgba(93,157,255,0.08)  0%, transparent 28%),
+      radial-gradient(circle at 85% 12%, rgba(73,210,194,0.06)  0%, transparent 24%),
+      linear-gradient(180deg, var(--bg-grad-start) 0%, var(--bg-grad-mid) 50%, var(--bg-grad-end) 100%);
+    background-size: 72px 72px, 72px 72px, auto, auto, 100% 100%;
+  }
+
+  .noise { opacity: 0.1; }
+
+  .lightOne {
+    background: radial-gradient(circle, rgba(93,157,255,0.08)  0%, rgba(93,157,255,0)  70%);
+  }
+  .lightTwo {
+    background: radial-gradient(circle, rgba(73,210,194,0.05)  0%, rgba(73,210,194,0)  72%);
+  }
+  .lightThree {
+    background: radial-gradient(circle, rgba(140,181,255,0.05) 0%, rgba(140,181,255,0) 72%);
+  }
+
+  .logoInner {
+    background: linear-gradient(135deg, #1e3a5f 0%, #1a3048 45%, #162840 100%);
+    box-shadow: 0 8px 32px rgba(93,157,255,0.2), inset 0 1px 0 rgba(255,255,255,0.06);
+    color: var(--accent-a);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dot, .logoRing, .logoRingPulse, .logoInner,
+  .light, .wordmarkTitle, .card, .root {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+  }
+}
