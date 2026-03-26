@@ -25,7 +25,7 @@ function AnimatedPhrase() {
   const textRef    = useRef("");
   const phraseRef  = useRef(0);
   const deletingRef = useRef(false);
-  const timerRef   = useRef<ReturnType<typeof setTimeout>>();
+  const timerRef   = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
 
   useEffect(() => {
     function tick() {
