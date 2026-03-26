@@ -200,7 +200,7 @@ export function HomePage() {
             onDownloadVSCode={downloadVSCode}
           />
 
-          <HelperAI />
+          {isAuthenticated && <HelperAI />}
         </>
       )}
     </main>
