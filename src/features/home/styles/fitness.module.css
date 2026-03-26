@@ -1,0 +1,508 @@
+/* ══════════════════════════════════════════════
+   Fitness Module styles
+   ══════════════════════════════════════════════ */
+
+.shell {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+/* ── page header ── */
+.pageTitle {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  letter-spacing: -0.02em;
+}
+
+.pageTitleIcon {
+  font-size: 1.25rem;
+  line-height: 1;
+}
+
+/* ── loading / error ── */
+.loadingState,
+.errorState {
+  padding: 3rem;
+  text-align: center;
+  color: var(--text-muted);
+  font-size: 0.9rem;
+}
+
+.errorState {
+  color: #ef4444;
+}
+
+/* ── ROI banner ── */
+.roiBanner {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  border-radius: 16px;
+  border: 1px solid var(--surface-border);
+  background: var(--surface-soft), var(--surface-tint);
+  box-shadow: var(--surface-shadow);
+  overflow: hidden;
+}
+
+.roiStat {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 1.4rem 1rem;
+  gap: 0.25rem;
+}
+
+.roiValue {
+  font-size: 1.75rem;
+  font-weight: 800;
+  color: var(--text-primary);
+  letter-spacing: -0.04em;
+  line-height: 1;
+}
+
+.roiLabel {
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.roiDivider {
+  width: 1px;
+  height: 3rem;
+  background: var(--surface-border);
+  flex-shrink: 0;
+}
+
+/* ── generic card ── */
+.card {
+  border-radius: 16px;
+  border: 1px solid var(--surface-border);
+  background: var(--surface-soft), var(--surface-tint);
+  box-shadow: var(--surface-shadow);
+  padding: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.cardHead {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+.cardEyebrow {
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: #2ec8be;
+}
+
+/* ── profile grid ── */
+.profileGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 1rem;
+}
+
+/* ── section header ── */
+.sectionHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.sectionTitle {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  letter-spacing: -0.02em;
+  margin: 0;
+}
+
+/* ── empty state ── */
+.emptyState {
+  padding: 2rem;
+  text-align: center;
+  color: var(--text-muted);
+  font-size: 0.875rem;
+  border-radius: 12px;
+  border: 1px dashed var(--surface-border);
+}
+
+/* ── supplement grid ── */
+.suppGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 1rem;
+}
+
+.suppCard {
+  border-radius: 14px;
+  border: 1px solid var(--surface-border);
+  background: var(--surface-soft), var(--surface-tint);
+  box-shadow: var(--surface-shadow);
+  padding: 1.1rem 1rem;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.suppCardLeft {
+  flex-shrink: 0;
+}
+
+.suppCardBody {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  min-width: 0;
+}
+
+.suppName {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.suppStat {
+  font-size: 0.78rem;
+  color: var(--text-muted);
+}
+
+.suppCardActions {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  flex-shrink: 0;
+}
+
+/* SVG progress circle */
+.circle {
+  display: block;
+}
+
+/* ── sessions table ── */
+.sessTable {
+  border-radius: 14px;
+  border: 1px solid var(--surface-border);
+  overflow: hidden;
+  background: var(--surface-soft), var(--surface-tint);
+  box-shadow: var(--surface-shadow);
+}
+
+.sessTableHead,
+.sessRow {
+  display: grid;
+  grid-template-columns: 110px 100px 90px 90px 70px 36px;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1rem;
+}
+
+.sessTableHead {
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-muted);
+  border-bottom: 1px solid var(--surface-border);
+}
+
+.sessRow {
+  font-size: 0.875rem;
+  color: var(--text-primary);
+  border-bottom: 1px solid var(--surface-border);
+  transition: background 180ms ease;
+}
+
+.sessRow:last-child {
+  border-bottom: none;
+}
+
+.sessRow:hover {
+  background: rgba(46, 200, 190, 0.04);
+}
+
+.sessType {
+  text-transform: capitalize;
+  font-weight: 600;
+  color: #2ec8be;
+}
+
+/* ── buttons ── */
+.btnPrimary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.6rem 1.3rem;
+  border-radius: 999px;
+  border: none;
+  background: linear-gradient(135deg, #0a7b72 0%, #2563eb 100%);
+  color: #fff;
+  font-size: 0.875rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: opacity 200ms ease, transform 150ms ease;
+  align-self: flex-start;
+}
+
+.btnPrimary:hover { opacity: 0.9; transform: translateY(-1px); }
+.btnPrimary:active { transform: translateY(0); }
+.btnPrimary:disabled { opacity: 0.45; cursor: not-allowed; }
+
+.btnSaved {
+  background: linear-gradient(135deg, #16a34a 0%, #15803d 100%);
+}
+
+.btnSecondary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.6rem 1.2rem;
+  border-radius: 999px;
+  border: 1px solid var(--surface-border);
+  background: transparent;
+  color: var(--text-primary);
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: border-color 180ms ease, background 180ms ease;
+}
+
+.btnSecondary:hover { border-color: rgba(46,200,190,0.4); background: rgba(46,200,190,0.05); }
+
+.btnAdd {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.45rem 1rem;
+  border-radius: 999px;
+  border: 1px solid rgba(46, 200, 190, 0.35);
+  background: rgba(46, 200, 190, 0.08);
+  color: #2ec8be;
+  font-size: 0.8rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 180ms ease, border-color 180ms ease;
+}
+
+.btnAdd:hover { background: rgba(46,200,190,0.15); border-color: rgba(46,200,190,0.55); }
+
+.btnAddSmall {
+  padding: 0.25rem 0.75rem;
+  border-radius: 999px;
+  border: 1px solid rgba(46, 200, 190, 0.35);
+  background: rgba(46, 200, 190, 0.08);
+  color: #2ec8be;
+  font-size: 0.75rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.iconBtn {
+  width: 2rem;
+  height: 2rem;
+  border-radius: 8px;
+  border: 1px solid var(--surface-border);
+  background: transparent;
+  color: var(--text-muted);
+  font-size: 0.85rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background 150ms ease, color 150ms ease, border-color 150ms ease;
+}
+
+.iconBtn:hover { background: rgba(46,200,190,0.08); color: #2ec8be; border-color: rgba(46,200,190,0.3); }
+
+.iconBtnDanger:hover { background: rgba(239,68,68,0.08); color: #ef4444; border-color: rgba(239,68,68,0.3); }
+
+/* ── form fields ── */
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.fieldLabel {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.fieldInput {
+  padding: 0.55rem 0.75rem;
+  border-radius: 8px;
+  border: 1px solid var(--surface-border);
+  background: var(--surface-base);
+  color: var(--text-primary);
+  font-size: 0.875rem;
+  width: 100%;
+  outline: none;
+  transition: border-color 180ms ease, box-shadow 180ms ease;
+}
+
+.fieldInput:focus {
+  border-color: rgba(46, 200, 190, 0.5);
+  box-shadow: 0 0 0 3px rgba(46, 200, 190, 0.12);
+}
+
+/* ── modal ── */
+.modalBackdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  background: rgba(0, 0, 0, 0.45);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+}
+
+.modal {
+  width: min(460px, 100%);
+  border-radius: 18px;
+  border: 1px solid var(--surface-border);
+  background: rgba(248, 251, 255, 0.98);
+  box-shadow: 0 32px 80px rgba(0,0,0,0.22);
+  display: flex;
+  flex-direction: column;
+  max-height: 90vh;
+  overflow: hidden;
+}
+
+[data-theme="dark"] .modal {
+  background: rgba(18, 28, 43, 0.98);
+}
+
+.modalWide {
+  width: min(580px, 100%);
+}
+
+.modalHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1.25rem 1.4rem 1rem;
+  border-bottom: 1px solid var(--surface-border);
+  font-size: 0.95rem;
+}
+
+.modalClose {
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  font-size: 1rem;
+  cursor: pointer;
+  padding: 0.2rem 0.4rem;
+  border-radius: 6px;
+  transition: color 150ms ease, background 150ms ease;
+}
+
+.modalClose:hover { color: var(--text-primary); background: var(--surface-border); }
+
+.modalBody {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  padding: 1.25rem 1.4rem;
+  overflow-y: auto;
+  flex: 1;
+}
+
+.modalRow {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.75rem;
+}
+
+.modalFoot {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.75rem;
+  padding: 1rem 1.4rem 1.25rem;
+  border-top: 1px solid var(--surface-border);
+}
+
+/* ── exercise rows ── */
+.exHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.exList {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.exRow {
+  display: grid;
+  grid-template-columns: 1fr 56px 56px 56px 32px;
+  gap: 0.4rem;
+  align-items: end;
+}
+
+.exName {}
+
+.exNum {
+  text-align: center;
+  padding-left: 0.4rem;
+  padding-right: 0.4rem;
+}
+
+.exLabel {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+/* ── dark mode overrides ── */
+[data-theme="dark"] .roiBanner,
+[data-theme="dark"] .card,
+[data-theme="dark"] .suppCard,
+[data-theme="dark"] .sessTable {
+  background: rgba(255,255,255,0.03);
+}
+
+[data-theme="dark"] .fieldInput {
+  background: rgba(255,255,255,0.06);
+}
+
+@media (max-width: 600px) {
+  .suppGrid { grid-template-columns: 1fr; }
+  .sessTableHead, .sessRow {
+    grid-template-columns: 90px 80px 70px 70px 50px 30px;
+    font-size: 0.75rem;
+    padding: 0.6rem 0.75rem;
+  }
+  .roiBanner { flex-direction: column; gap: 0; }
+  .roiDivider { width: 80%; height: 1px; }
+  .profileGrid { grid-template-columns: 1fr; }
+  .modalRow { grid-template-columns: 1fr; }
+  .exRow { grid-template-columns: 1fr 48px 48px 48px 28px; }
+}

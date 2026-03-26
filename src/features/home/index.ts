@@ -20,4 +20,5 @@ export * from "./components/HomeNav";
 export * from "./components/HomePage";
 export * from "./components/SecuritySection";
 export * from "./components/StatsSection";
+export * from "./components/FitnessPage";
 export * from "./components/ToastStack";

@@ -3,10 +3,18 @@ import type {
   AccountData,
   AdminSuggestionRecord,
   CabinetProfile,
+  Exercise,
+  FitnessGoal,
+  FitnessProfile,
+  GymRoi,
+  GymSession,
   SessionUser,
+  Supplement,
+  SupplementStatus,
   SuggestionDraft,
   SuggestionRecord,
   SuggestionStatus,
+  WorkoutType,
 } from "@/features/home/types";
 
 type DbUserRow = {
@@ -507,5 +515,191 @@ export const database = {
     await supabaseRequest(`users?id=eq.${encodeURIComponent(userId)}`, {
       method: "DELETE",
     }, { allowEmpty: true });
+  },
+
+  // ── Fitness: profile ───────────────────────────────────────
+
+  async getFitnessProfile(userId: string): Promise<FitnessProfile | null> {
+    const { data } = await supabaseRequest<{
+      user_id: string;
+      monthly_gym_cost: number;
+      fitness_goal: FitnessGoal;
+      fitness_badge: string;
+    }[]>(`fitness_profile?user_id=eq.${encodeURIComponent(userId)}&select=*`, {}, { allowEmpty: true });
+    const row = data?.[0];
+    if (!row) return null;
+    return {
+      userId: row.user_id,
+      monthlyGymCost: row.monthly_gym_cost,
+      fitnessGoal: row.fitness_goal,
+      fitnessBadge: row.fitness_badge,
+    };
+  },
+
+  async upsertFitnessProfile(userId: string, patch: Partial<Omit<FitnessProfile, "userId">>): Promise<void> {
+    await supabaseRequest("fitness_profile", {
+      method: "POST",
+      body: JSON.stringify({
+        user_id: userId,
+        ...(patch.monthlyGymCost !== undefined && { monthly_gym_cost: patch.monthlyGymCost }),
+        ...(patch.fitnessGoal   !== undefined && { fitness_goal:      patch.fitnessGoal   }),
+        ...(patch.fitnessBadge  !== undefined && { fitness_badge:     patch.fitnessBadge  }),
+      }),
+    }, { prefer: "resolution=merge-duplicates", allowEmpty: true });
+  },
+
+  // ── Fitness: supplements ───────────────────────────────────
+
+  async listSupplements(userId: string): Promise<Supplement[]> {
+    const { data } = await supabaseRequest<{
+      id: string; user_id: string; name: string;
+      total_weight_g: number; serving_size_g: number; servings_per_day: number;
+      price: number; purchase_date: string; notes: string | null;
+      created_at: string; updated_at: string;
+    }[]>(`supplements?user_id=eq.${encodeURIComponent(userId)}&order=purchase_date.desc&select=*`, {}, { allowEmpty: true });
+    return (data ?? []).map((r) => ({
+      id: r.id, userId: r.user_id, name: r.name,
+      totalWeightG: r.total_weight_g, servingSizeG: r.serving_size_g,
+      servingsPerDay: r.servings_per_day, price: r.price,
+      purchaseDate: r.purchase_date, notes: r.notes,
+      createdAt: r.created_at, updatedAt: r.updated_at,
+    }));
+  },
+
+  async createSupplement(userId: string, s: Omit<Supplement, "id" | "userId" | "createdAt" | "updatedAt">): Promise<Supplement> {
+    const id = randomUUID();
+    const { data } = await supabaseRequest<{
+      id: string; user_id: string; name: string;
+      total_weight_g: number; serving_size_g: number; servings_per_day: number;
+      price: number; purchase_date: string; notes: string | null;
+      created_at: string; updated_at: string;
+    }[]>("supplements", {
+      method: "POST",
+      body: JSON.stringify({
+        id, user_id: userId, name: s.name,
+        total_weight_g: s.totalWeightG, serving_size_g: s.servingSizeG,
+        servings_per_day: s.servingsPerDay, price: s.price,
+        purchase_date: s.purchaseDate, notes: s.notes ?? null,
+      }),
+    }, { prefer: "return=representation" });
+    const r = data![0];
+    return {
+      id: r.id, userId: r.user_id, name: r.name,
+      totalWeightG: r.total_weight_g, servingSizeG: r.serving_size_g,
+      servingsPerDay: r.servings_per_day, price: r.price,
+      purchaseDate: r.purchase_date, notes: r.notes,
+      createdAt: r.created_at, updatedAt: r.updated_at,
+    };
+  },
+
+  async updateSupplement(id: string, userId: string, patch: Partial<Omit<Supplement, "id" | "userId" | "createdAt" | "updatedAt">>): Promise<void> {
+    await supabaseRequest(
+      `supplements?id=eq.${encodeURIComponent(id)}&user_id=eq.${encodeURIComponent(userId)}`,
+      {
+        method: "PATCH",
+        body: JSON.stringify({
+          ...(patch.name            !== undefined && { name:             patch.name            }),
+          ...(patch.totalWeightG    !== undefined && { total_weight_g:   patch.totalWeightG    }),
+          ...(patch.servingSizeG    !== undefined && { serving_size_g:   patch.servingSizeG    }),
+          ...(patch.servingsPerDay  !== undefined && { servings_per_day: patch.servingsPerDay  }),
+          ...(patch.price           !== undefined && { price:            patch.price           }),
+          ...(patch.purchaseDate    !== undefined && { purchase_date:    patch.purchaseDate    }),
+          ...(patch.notes           !== undefined && { notes:            patch.notes           }),
+        }),
+      },
+      { allowEmpty: true }
+    );
+  },
+
+  async deleteSupplement(id: string, userId: string): Promise<void> {
+    await supabaseRequest(
+      `supplements?id=eq.${encodeURIComponent(id)}&user_id=eq.${encodeURIComponent(userId)}`,
+      { method: "DELETE" },
+      { allowEmpty: true }
+    );
+  },
+
+  async getSupplementStatuses(userId: string): Promise<SupplementStatus[]> {
+    const { data } = await supabaseRequest<{
+      id: string; name: string; remaining_pct: number; remaining_g: number;
+      days_left: number; depletion_date: string; cost_per_serving: number;
+    }[]>(
+      `rpc/supplement_statuses`,
+      { method: "POST", body: JSON.stringify({ p_user_id: userId }) },
+      { allowEmpty: true }
+    );
+    return (data ?? []).map((r) => ({
+      id: r.id, name: r.name, remainingPct: r.remaining_pct,
+      remainingG: r.remaining_g, daysLeft: r.days_left,
+      depletionDate: r.depletion_date, costPerServing: r.cost_per_serving,
+    }));
+  },
+
+  // ── Fitness: gym sessions ──────────────────────────────────
+
+  async listGymSessions(userId: string, limit = 50): Promise<GymSession[]> {
+    const { data } = await supabaseRequest<{
+      id: string; user_id: string; date: string; duration_min: number;
+      workout_type: WorkoutType; volume_kg: number; exercises: Exercise[];
+      notes: string | null; created_at: string; updated_at: string;
+    }[]>(
+      `gym_sessions?user_id=eq.${encodeURIComponent(userId)}&order=date.desc&limit=${limit}&select=*`,
+      {},
+      { allowEmpty: true }
+    );
+    return (data ?? []).map((r) => ({
+      id: r.id, userId: r.user_id, date: r.date,
+      durationMin: r.duration_min, workoutType: r.workout_type,
+      volumeKg: r.volume_kg, exercises: r.exercises ?? [],
+      notes: r.notes, createdAt: r.created_at, updatedAt: r.updated_at,
+    }));
+  },
+
+  async createGymSession(userId: string, s: Omit<GymSession, "id" | "userId" | "createdAt" | "updatedAt">): Promise<GymSession> {
+    const id = randomUUID();
+    const { data } = await supabaseRequest<{
+      id: string; user_id: string; date: string; duration_min: number;
+      workout_type: WorkoutType; volume_kg: number; exercises: Exercise[];
+      notes: string | null; created_at: string; updated_at: string;
+    }[]>("gym_sessions", {
+      method: "POST",
+      body: JSON.stringify({
+        id, user_id: userId, date: s.date,
+        duration_min: s.durationMin, workout_type: s.workoutType,
+        volume_kg: s.volumeKg, exercises: s.exercises, notes: s.notes ?? null,
+      }),
+    }, { prefer: "return=representation" });
+    const r = data![0];
+    return {
+      id: r.id, userId: r.user_id, date: r.date,
+      durationMin: r.duration_min, workoutType: r.workout_type,
+      volumeKg: r.volume_kg, exercises: r.exercises ?? [],
+      notes: r.notes, createdAt: r.created_at, updatedAt: r.updated_at,
+    };
+  },
+
+  async deleteGymSession(id: string, userId: string): Promise<void> {
+    await supabaseRequest(
+      `gym_sessions?id=eq.${encodeURIComponent(id)}&user_id=eq.${encodeURIComponent(userId)}`,
+      { method: "DELETE" },
+      { allowEmpty: true }
+    );
+  },
+
+  async getGymRoi(userId: string, month: string): Promise<GymRoi | null> {
+    const { data } = await supabaseRequest<{
+      sessions_count: number; monthly_cost: number; cost_per_session: number;
+    }[]>(
+      "rpc/gym_roi",
+      { method: "POST", body: JSON.stringify({ p_user_id: userId, p_month: month }) },
+      { allowEmpty: true }
+    );
+    const r = data?.[0];
+    if (!r) return null;
+    return {
+      sessionsCount: r.sessions_count,
+      monthlyCost: r.monthly_cost,
+      costPerSession: r.cost_per_session,
+    };
   },
 };

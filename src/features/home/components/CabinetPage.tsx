@@ -196,6 +196,15 @@ export function CabinetPage() {
                       <button
                         type="button"
                         className={styles.navDropdownItem}
+                        onClick={() => { setTopbarDropdown(false); router.push("/fitness"); }}
+                      >
+                        <span className={styles.navDropdownItemIcon}>🏋️</span>
+                        Fitness Tracker
+                      </button>
+
+                      <button
+                        type="button"
+                        className={styles.navDropdownItem}
                         onClick={() => { setTopbarDropdown(false); router.push("/settings"); }}
                       >
                         <span className={styles.navDropdownItemIcon}>◈</span>

@@ -119,3 +119,68 @@ export type AccountData = {
   githubUsername: string;
   totpEnabled: boolean;
 };
+
+// ── Fitness Module ────────────────────────────────────────────
+
+export type FitnessGoal = "strength" | "hypertrophy" | "endurance" | "general";
+
+export type WorkoutType =
+  | "push" | "pull" | "legs" | "upper" | "lower"
+  | "full_body" | "cardio" | "other";
+
+export type FitnessProfile = {
+  userId: string;
+  monthlyGymCost: number;
+  fitnessGoal: FitnessGoal;
+  fitnessBadge: string;
+};
+
+export type Supplement = {
+  id: string;
+  userId: string;
+  name: string;
+  totalWeightG: number;
+  servingSizeG: number;
+  servingsPerDay: number;
+  price: number;
+  purchaseDate: string; // ISO date string
+  notes: string | null;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type SupplementStatus = {
+  id: string;
+  name: string;
+  remainingPct: number;
+  remainingG: number;
+  daysLeft: number;
+  depletionDate: string;
+  costPerServing: number;
+};
+
+export type Exercise = {
+  name: string;
+  sets: number;
+  reps: number;
+  weightKg: number;
+};
+
+export type GymSession = {
+  id: string;
+  userId: string;
+  date: string;
+  durationMin: number;
+  workoutType: WorkoutType;
+  volumeKg: number;
+  exercises: Exercise[];
+  notes: string | null;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type GymRoi = {
+  sessionsCount: number;
+  monthlyCost: number;
+  costPerSession: number;
+};

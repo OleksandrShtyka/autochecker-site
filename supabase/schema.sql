@@ -60,15 +60,99 @@ alter table public.suggestions enable row level security;
 
 -- Users: each user can read and update only their own row.
 -- Service role key (used by the API) bypasses RLS entirely.
-create policy if not exists "users_self_read"
+drop policy if exists "users_self_read" on public.users;
+create policy "users_self_read"
   on public.users for select
   using (auth.uid()::text = id);
 
-create policy if not exists "users_self_update"
+drop policy if exists "users_self_update" on public.users;
+create policy "users_self_update"
   on public.users for update
   using (auth.uid()::text = id);
 
 -- Suggestions: users manage their own; admins see all.
-create policy if not exists "suggestions_owner_all"
+drop policy if exists "suggestions_owner_all" on public.suggestions;
+create policy "suggestions_owner_all"
   on public.suggestions for all
   using (auth.uid()::text = user_id);
+
+
+-- ── Fitness Module ───────────────────────────────────────────
+
+create table if not exists public.fitness_profile (
+  user_id            text primary key references public.users(id) on delete cascade,
+  monthly_gym_cost   numeric(10,2) not null default 0,
+  fitness_goal       text not null default 'general'
+                       check (fitness_goal in ('strength','hypertrophy','endurance','general')),
+  fitness_badge      text not null default 'Beginner',
+  created_at         timestamptz not null default now(),
+  updated_at         timestamptz not null default now()
+);
+
+create table if not exists public.supplements (
+  id                text primary key,
+  user_id           text not null references public.users(id) on delete cascade,
+  name              text not null,
+  total_weight_g    numeric(10,2) not null,
+  serving_size_g    numeric(10,2) not null,
+  servings_per_day  numeric(5,2) not null default 1,
+  price             numeric(10,2) not null default 0,
+  purchase_date     date not null default current_date,
+  notes             text,
+  created_at        timestamptz not null default now(),
+  updated_at        timestamptz not null default now(),
+  constraint supplements_total_weight_pos  check (total_weight_g  > 0),
+  constraint supplements_serving_size_pos  check (serving_size_g  > 0),
+  constraint supplements_spd_pos           check (servings_per_day > 0),
+  constraint supplements_price_nn          check (price           >= 0)
+);
+
+create table if not exists public.gym_sessions (
+  id            text primary key,
+  user_id       text not null references public.users(id) on delete cascade,
+  date          date not null default current_date,
+  duration_min  integer not null default 60,
+  workout_type  text not null default 'full_body'
+                  check (workout_type in
+                    ('push','pull','legs','upper','lower','full_body','cardio','other')),
+  volume_kg     numeric(10,2) not null default 0,
+  exercises     jsonb not null default '[]'::jsonb,
+  notes         text,
+  created_at    timestamptz not null default now(),
+  updated_at    timestamptz not null default now(),
+  constraint gym_sessions_duration_pos check (duration_min > 0),
+  constraint gym_sessions_volume_nn    check (volume_kg   >= 0)
+);
+
+create index if not exists idx_supplements_user          on public.supplements(user_id);
+create index if not exists idx_supplements_user_purchase on public.supplements(user_id, purchase_date desc);
+create index if not exists idx_gym_sessions_user_date    on public.gym_sessions(user_id, date desc);
+create index if not exists idx_gym_sessions_type         on public.gym_sessions(user_id, workout_type);
+
+create or replace trigger set_fitness_profile_updated_at
+  before update on public.fitness_profile
+  for each row execute function public.set_updated_at();
+
+create or replace trigger set_supplements_updated_at
+  before update on public.supplements
+  for each row execute function public.set_updated_at();
+
+create or replace trigger set_gym_sessions_updated_at
+  before update on public.gym_sessions
+  for each row execute function public.set_updated_at();
+
+alter table public.fitness_profile enable row level security;
+alter table public.supplements      enable row level security;
+alter table public.gym_sessions     enable row level security;
+
+drop policy if exists "fitness_profile_owner_all" on public.fitness_profile;
+create policy "fitness_profile_owner_all"
+  on public.fitness_profile for all using (auth.uid()::text = user_id);
+
+drop policy if exists "supplements_owner_all" on public.supplements;
+create policy "supplements_owner_all"
+  on public.supplements for all using (auth.uid()::text = user_id);
+
+drop policy if exists "gym_sessions_owner_all" on public.gym_sessions;
+create policy "gym_sessions_owner_all"
+  on public.gym_sessions for all using (auth.uid()::text = user_id);
