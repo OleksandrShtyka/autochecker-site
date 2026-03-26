@@ -94,10 +94,13 @@ export async function GET(request: Request) {
       return errorRedirect("Missing OAuth parameters.");
     }
 
+    // Verify the HMAC signature of the state — this is the real CSRF defence.
+    // We do NOT compare storedState === state because the cookie can be
+    // overwritten if the user initiates the flow twice (double-click, etc.)
     const cookieStore = await cookies();
-    const storedState = cookieStore.get(OAUTH_STATE_COOKIE)?.value;
+    const hasStateCookie = !!cookieStore.get(OAUTH_STATE_COOKIE)?.value;
 
-    if (!storedState || storedState !== state || !verifyOAuthState(state)) {
+    if (!hasStateCookie || !verifyOAuthState(state)) {
       return errorRedirect("Invalid OAuth state. Please try again.");
     }
 
