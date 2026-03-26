@@ -28,6 +28,7 @@ import { useToastQueue } from "../hooks/useToastQueue";
 import styles from "../styles";
 import { cx } from "../utils";
 import { CabinetAuthModal } from "./CabinetAuthModal";
+import { HelperAI } from "./HelperAI";
 import { CtaSection } from "./CtaSection";
 import { DownloadOverlay } from "./DownloadOverlay";
 import { FeatureModal } from "./FeatureModal";
@@ -198,6 +199,8 @@ export function HomePage() {
             onDownloadVsix={downloadVsix}
             onDownloadVSCode={downloadVSCode}
           />
+
+          <HelperAI />
         </>
       )}
     </main>
