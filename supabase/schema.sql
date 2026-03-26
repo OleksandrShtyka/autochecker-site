@@ -12,6 +12,8 @@ create table if not exists public.users (
   google_email text,
   github_id text unique,
   github_username text,
+  totp_secret text,
+  totp_enabled boolean not null default false,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );

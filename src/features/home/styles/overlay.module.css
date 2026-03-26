@@ -391,3 +391,45 @@
 @media (max-width: 560px) {
   .toastViewport { top: 0.75rem; right: 0.75rem; width: calc(100% - 1.5rem); }
 }
+
+/* ── MFA code input (shared between login modal and settings) ── */
+.mfaCodeWrap {
+  display: flex;
+  justify-content: center;
+  margin: 0.5rem 0;
+}
+
+.mfaCodeInput {
+  width: 11rem;
+  padding: 1rem 1.25rem;
+  border-radius: 1rem;
+  border: 1.5px solid var(--surface-border);
+  background: var(--surface-soft), var(--surface-tint);
+  color: var(--text-primary);
+  font-family: "Cabinet Grotesk", monospace;
+  font-size: 2rem;
+  font-weight: 800;
+  letter-spacing: 0.25em;
+  text-align: center;
+  transition: border-color 180ms ease, box-shadow 180ms ease;
+  outline: none;
+}
+
+.mfaCodeInput::placeholder {
+  color: var(--text-tertiary);
+  letter-spacing: 0.15em;
+}
+
+.mfaCodeInput:focus {
+  border-color: var(--accent-a);
+  box-shadow: 0 0 0 3px rgba(10, 123, 114, 0.14);
+}
+
+[data-theme="dark"] .mfaCodeInput {
+  background: linear-gradient(180deg, #1c283a, #162234);
+}
+
+[data-theme="dark"] .mfaCodeInput:focus {
+  border-color: var(--accent-c);
+  box-shadow: 0 0 0 3px rgba(73, 210, 194, 0.14);
+}
