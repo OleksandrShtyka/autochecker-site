@@ -21,6 +21,7 @@ export function CabinetPage() {
   const { theme } = useTheme();
   const { dismissToast, pushToast, toastLifetimeMs, toasts } = useToastQueue();
   const {
+    accountData,
     authMessage,
     history,
     isAdmin,
@@ -28,10 +29,14 @@ export function CabinetPage() {
     isBooting,
     logout,
     profile,
+    sessionUser,
     setProfileField,
     setSuggestionField,
     submitSuggestion,
     suggestion,
+    uploadAvatar,
+    removeAvatar,
+    disconnectOAuth,
   } = useCabinet({
     features: FEATURES,
   });
@@ -44,6 +49,34 @@ export function CabinetPage() {
 
   const handleSubmitSuggestion = async () => {
     const feedback = await submitSuggestion();
+    pushToast(feedback);
+  };
+
+  const handleAvatarChange = async (file: File) => {
+    const feedback = await uploadAvatar(file);
+    pushToast(feedback);
+  };
+
+  const handleAvatarRemove = async () => {
+    const feedback = await removeAvatar();
+    pushToast(feedback);
+  };
+
+  const handleConnectGoogle = () => {
+    window.location.href = "/api/auth/oauth/google";
+  };
+
+  const handleConnectGithub = () => {
+    window.location.href = "/api/auth/oauth/github";
+  };
+
+  const handleDisconnectGoogle = async () => {
+    const feedback = await disconnectOAuth("google");
+    pushToast(feedback);
+  };
+
+  const handleDisconnectGithub = async () => {
+    const feedback = await disconnectOAuth("github");
     pushToast(feedback);
   };
 
@@ -91,6 +124,17 @@ export function CabinetPage() {
                         Admin Panel
                       </button>
                     ) : null}
+                    <div className={styles.topbarUser}>
+                      {accountData.avatarUrl ? (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img src={accountData.avatarUrl} alt="" className={styles.topbarAvatar} />
+                      ) : (
+                        <div className={styles.topbarAvatarPlaceholder}>
+                          {(sessionUser?.name ?? sessionUser?.email ?? "?").slice(0, 1).toUpperCase()}
+                        </div>
+                      )}
+                      <span className={styles.topbarName}>{sessionUser?.name}</span>
+                    </div>
                     <button type="button" className={styles.navCta} onClick={() => void handleLogout()}>
                       Logout
                     </button>
@@ -109,8 +153,10 @@ export function CabinetPage() {
             ) : isAuthenticated ? (
               <>
                 <CabinetDashboard
+                  email={sessionUser?.email ?? ""}
                   features={FEATURES}
                   profile={profile}
+                  accountData={accountData}
                   suggestion={suggestion}
                   history={history}
                   roleOptions={CABINET_ROLE_OPTIONS}
@@ -118,6 +164,12 @@ export function CabinetPage() {
                   onProfileFieldChange={setProfileField}
                   onSuggestionFieldChange={setSuggestionField}
                   onSubmitSuggestion={() => void handleSubmitSuggestion()}
+                  onAvatarChange={handleAvatarChange}
+                  onAvatarRemove={handleAvatarRemove}
+                  onConnectGoogle={handleConnectGoogle}
+                  onDisconnectGoogle={handleDisconnectGoogle}
+                  onConnectGithub={handleConnectGithub}
+                  onDisconnectGithub={handleDisconnectGithub}
                 />
                 {authMessage ? <p className={styles.authMessage}>{authMessage}</p> : null}
               </>

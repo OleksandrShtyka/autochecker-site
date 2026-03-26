@@ -462,6 +462,289 @@
   margin-top: 1rem;
 }
 
+/* ── Topbar user chip ── */
+.topbarUser {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.3rem 0.75rem 0.3rem 0.3rem;
+  border-radius: 999px;
+  border: 1px solid var(--surface-border);
+  background: var(--surface-soft), var(--surface-tint);
+}
+
+.topbarAvatar {
+  width: 1.85rem;
+  height: 1.85rem;
+  border-radius: 50%;
+  object-fit: cover;
+  display: block;
+  flex-shrink: 0;
+}
+
+.topbarAvatarPlaceholder {
+  width: 1.85rem;
+  height: 1.85rem;
+  border-radius: 50%;
+  background: linear-gradient(135deg, rgba(93, 212, 198, 0.35), rgba(70, 150, 220, 0.35));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.78rem;
+  font-weight: 800;
+  color: var(--text-primary);
+  flex-shrink: 0;
+}
+
+.topbarName {
+  font-size: 0.84rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  max-width: 10rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* ── Welcome card ── */
+.cabinetWelcome {
+  display: flex;
+  align-items: center;
+  gap: 1.1rem;
+  margin-bottom: 1.5rem;
+  padding: 1.1rem 1.25rem;
+  border-radius: 1.75rem;
+  border: 1px solid var(--surface-border);
+  background: rgba(255, 255, 255, 0.46);
+}
+
+[data-theme="dark"] .cabinetWelcome {
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.cabinetWelcomeAvatar {
+  flex-shrink: 0;
+}
+
+.cabinetWelcomeAvatarImg {
+  width: 3.5rem;
+  height: 3.5rem;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid var(--surface-border);
+  display: block;
+}
+
+.cabinetWelcomeAvatarPlaceholder {
+  width: 3.5rem;
+  height: 3.5rem;
+  border-radius: 50%;
+  border: 2px solid var(--surface-border);
+  background: linear-gradient(135deg, rgba(93, 212, 198, 0.25), rgba(70, 150, 220, 0.25));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: "Cabinet Grotesk", sans-serif;
+  font-size: 1.3rem;
+  font-weight: 800;
+  color: var(--text-primary);
+}
+
+[data-theme="dark"] .cabinetWelcomeAvatarPlaceholder {
+  background: linear-gradient(135deg, rgba(93, 212, 198, 0.15), rgba(70, 150, 220, 0.15));
+}
+
+.cabinetWelcomeGreeting {
+  color: var(--text-tertiary);
+  font-size: 0.78rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  margin-bottom: 0.2rem;
+}
+
+.cabinetWelcomeName {
+  color: var(--text-primary);
+  font-family: "Cabinet Grotesk", sans-serif;
+  font-size: 1.35rem;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+}
+
+/* ── Account settings row ── */
+.cabinetAccountRow {
+  margin-top: 1rem;
+}
+
+/* ── Avatar ── */
+.avatarSection {
+  display: flex;
+  align-items: center;
+  gap: 1.25rem;
+  margin-bottom: 1.25rem;
+  padding-bottom: 1.25rem;
+  border-bottom: 1px solid var(--surface-border);
+}
+
+.avatarWrap {
+  position: relative;
+  flex-shrink: 0;
+  width: 5rem;
+  height: 5rem;
+}
+
+.avatarImg {
+  width: 5rem;
+  height: 5rem;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid var(--surface-border);
+  display: block;
+}
+
+.avatarPlaceholder {
+  width: 5rem;
+  height: 5rem;
+  border-radius: 50%;
+  border: 2px solid var(--surface-border);
+  background: linear-gradient(135deg, rgba(93, 212, 198, 0.25), rgba(70, 150, 220, 0.25));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: "Cabinet Grotesk", sans-serif;
+  font-size: 1.4rem;
+  font-weight: 800;
+  color: var(--text-primary);
+  letter-spacing: -0.02em;
+}
+
+[data-theme="dark"] .avatarPlaceholder {
+  background: linear-gradient(135deg, rgba(93, 212, 198, 0.15), rgba(70, 150, 220, 0.15));
+}
+
+.avatarSpinner {
+  position: absolute;
+  inset: -3px;
+  border-radius: 50%;
+  border: 2px solid transparent;
+  border-top-color: rgba(93, 212, 198, 0.8);
+  animation: spinAngle 0.8s linear infinite;
+}
+
+.avatarActions {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.avatarEmail {
+  color: var(--text-secondary);
+  font-size: 0.84rem;
+  font-weight: 600;
+}
+
+.avatarButtons {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.avatarHint {
+  color: var(--text-tertiary);
+  font-size: 0.76rem;
+}
+
+.avatarFileInput {
+  display: none;
+}
+
+/* ── Ghost button (small, text-like) ── */
+.btnGhost {
+  border: 0;
+  background: transparent;
+  color: var(--text-tertiary);
+  font: inherit;
+  font-size: 0.84rem;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 0.55rem 0.85rem;
+  border-radius: 999px;
+  transition: color 180ms ease, background 180ms ease;
+}
+
+.btnGhost:hover {
+  color: var(--text-primary);
+  background: rgba(0, 0, 0, 0.04);
+}
+
+[data-theme="dark"] .btnGhost:hover {
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.btnGhost:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* ── Connected accounts list ── */
+.connectedAccountsList {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.connectedAccountRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.75rem 0.9rem;
+  border-radius: 1rem;
+  border: 1px solid var(--surface-border);
+  background: rgba(255, 255, 255, 0.52);
+}
+
+[data-theme="dark"] .connectedAccountRow {
+  background: rgba(10, 20, 36, 0.6);
+}
+
+.connectedAccountInfo {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.connectedAccountIcon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  border-radius: 50%;
+  border: 1px solid var(--surface-border);
+  background: rgba(255, 255, 255, 0.8);
+  flex-shrink: 0;
+}
+
+[data-theme="dark"] .connectedAccountIcon {
+  background: rgba(255, 255, 255, 0.06);
+  color: rgba(230, 242, 255, 0.9);
+}
+
+.connectedAccountName {
+  display: block;
+  color: var(--text-primary);
+  font-size: 0.88rem;
+  font-weight: 700;
+}
+
+.connectedAccountMeta {
+  display: block;
+  color: var(--text-tertiary);
+  font-size: 0.78rem;
+  margin-top: 0.1rem;
+}
+
 @media (max-width: 1100px) {
   .cabinetGrid,
   .formGrid,
@@ -488,5 +771,14 @@
   .adminItemFooter {
     flex-direction: column;
     align-items: stretch;
+  }
+
+  .avatarSection {
+    flex-wrap: wrap;
+  }
+
+  .connectedAccountRow {
+    flex-wrap: wrap;
+    gap: 0.5rem;
   }
 }

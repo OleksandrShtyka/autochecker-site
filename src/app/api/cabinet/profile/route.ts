@@ -20,6 +20,7 @@ export async function GET() {
     return NextResponse.json({
       ok: true,
       profile: user.profile,
+      accountData: user.accountData,
       user: {
         id: user.id,
         name: user.name,
@@ -62,7 +63,7 @@ export async function PATCH(request: Request) {
       return jsonError("Profile update failed.", 500);
     }
 
-    return NextResponse.json({ ok: true, profile: user.profile });
+    return NextResponse.json({ ok: true, profile: user.profile, accountData: user.accountData });
   } catch (error) {
     return jsonError(error instanceof Error ? error.message : "Server error.", 500);
   }

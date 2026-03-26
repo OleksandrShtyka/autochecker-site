@@ -51,13 +51,16 @@ export function HomePage() {
     useFeatureModal();
   const { downloadState, triggerDownload } = useDownloadManager();
   const {
+    accountData,
     authForm,
     authMessage,
     authMode,
     isAuthenticated,
+    sessionUser,
     setAuthField,
     setAuthMode,
     submitAuth,
+    logout,
   } = useCabinet({
     features: FEATURES,
   });
@@ -85,6 +88,11 @@ export function HomePage() {
 
     setIsAuthModalOpen(false);
     router.push("/cabinet");
+  };
+
+  const handleLogout = async () => {
+    const feedback = await logout();
+    pushToast(feedback);
   };
 
   useEffect(() => {
@@ -123,17 +131,23 @@ export function HomePage() {
             onAuthModeChange={setAuthMode}
             onClose={() => setIsAuthModalOpen(false)}
             onSubmit={() => void submitCabinetAccess()}
+            onGoogleLogin={() => { window.location.href = "/api/auth/oauth/google"; }}
           />
 
           <HomeNav
             activeSection={activeSection}
             isAuthenticated={isAuthenticated}
+            accountData={accountData}
+            userName={sessionUser?.name ?? ""}
+            userEmail={sessionUser?.email ?? ""}
             navItems={NAV_ITEMS}
             navIndicator={indicator}
             navRefs={navRefs}
             navTrackRef={navTrackRef}
             onScrollToSection={scrollToSection}
             onOpenCabinet={openCabinet}
+            onOpenDashboard={() => router.push("/cabinet")}
+            onLogout={() => void handleLogout()}
             onInstall={downloadVsix}
             githubUrl={GITHUB}
             version={RELEASE_VERSION}

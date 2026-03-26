@@ -1,11 +1,14 @@
 "use client";
 
 import styles from "../styles";
-import type { CabinetProfile, Feature, SuggestionDraft, SuggestionRecord } from "../types";
+import type { AccountData, CabinetProfile, Feature, SuggestionDraft, SuggestionRecord } from "../types";
+import { AccountSettings } from "./AccountSettings";
 
 type CabinetDashboardProps = {
+  email: string;
   features: Feature[];
   profile: CabinetProfile;
+  accountData: AccountData;
   suggestion: SuggestionDraft;
   history: SuggestionRecord[];
   roleOptions: string[];
@@ -13,11 +16,19 @@ type CabinetDashboardProps = {
   onProfileFieldChange: (field: keyof CabinetProfile, value: string) => void;
   onSuggestionFieldChange: (field: keyof SuggestionDraft, value: string) => void;
   onSubmitSuggestion: () => void;
+  onAvatarChange: (file: File) => Promise<void>;
+  onAvatarRemove: () => Promise<void>;
+  onConnectGoogle: () => void;
+  onDisconnectGoogle: () => Promise<void>;
+  onConnectGithub: () => void;
+  onDisconnectGithub: () => Promise<void>;
 };
 
 export function CabinetDashboard({
+  email,
   features,
   profile,
+  accountData,
   suggestion,
   history,
   roleOptions,
@@ -25,6 +36,12 @@ export function CabinetDashboard({
   onProfileFieldChange,
   onSuggestionFieldChange,
   onSubmitSuggestion,
+  onAvatarChange,
+  onAvatarRemove,
+  onConnectGoogle,
+  onDisconnectGoogle,
+  onConnectGithub,
+  onDisconnectGithub,
 }: CabinetDashboardProps) {
   return (
     <section className={styles.cabinet}>
@@ -40,6 +57,23 @@ export function CabinetDashboard({
               Тут окрема сторінка кабінету: профіль користувача, персональні налаштування
               та форма пропозицій для покращення розширення.
             </p>
+          </div>
+        </div>
+
+        <div className={styles.cabinetWelcome}>
+          <div className={styles.cabinetWelcomeAvatar}>
+            {accountData.avatarUrl ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={accountData.avatarUrl} alt="" className={styles.cabinetWelcomeAvatarImg} />
+            ) : (
+              <div className={styles.cabinetWelcomeAvatarPlaceholder}>
+                {(profile.name || email).slice(0, 1).toUpperCase()}
+              </div>
+            )}
+          </div>
+          <div>
+            <p className={styles.cabinetWelcomeGreeting}>Welcome back</p>
+            <h3 className={styles.cabinetWelcomeName}>{profile.name || email}</h3>
           </div>
         </div>
 
@@ -178,6 +212,19 @@ export function CabinetDashboard({
           </div>
         </div>
 
+        <div className={styles.cabinetAccountRow}>
+          <AccountSettings
+            email={email}
+            accountData={accountData}
+            onAvatarChange={onAvatarChange}
+            onAvatarRemove={onAvatarRemove}
+            onConnectGoogle={onConnectGoogle}
+            onDisconnectGoogle={onDisconnectGoogle}
+            onConnectGithub={onConnectGithub}
+            onDisconnectGithub={onDisconnectGithub}
+          />
+        </div>
+
         <div className={styles.historyCard}>
           <div className={styles.cabinetCardHead}>
             <span className={styles.cabinetEyebrow}>Recent ideas</span>
@@ -206,7 +253,7 @@ export function CabinetDashboard({
               ))
             ) : (
               <p className={styles.historyEmpty}>
-                Тут з’являться твої останні пропозиції після відправки.
+                Тут з&apos;являться твої останні пропозиції після відправки.
               </p>
             )}
           </div>

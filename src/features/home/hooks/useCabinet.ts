@@ -1,7 +1,8 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import type {
+  AccountData,
   ActionFeedback,
   AuthForm,
   AuthMode,
@@ -32,6 +33,14 @@ const INITIAL_PROFILE: CabinetProfile = {
   favoriteFeature: "Sidebar Dashboard",
 };
 
+const INITIAL_ACCOUNT_DATA: AccountData = {
+  avatarUrl: "",
+  connectedGoogle: false,
+  googleEmail: "",
+  connectedGithub: false,
+  githubUsername: "",
+};
+
 type UseCabinetOptions = {
   features: Feature[];
 };
@@ -55,6 +64,7 @@ export function useCabinet({ features }: UseCabinetOptions) {
   const [authMode, setAuthMode] = useState<AuthMode>("register");
   const [authForm, setAuthForm] = useState<AuthForm>(INITIAL_AUTH_FORM);
   const [profile, setProfile] = useState<CabinetProfile>(INITIAL_PROFILE);
+  const [accountData, setAccountData] = useState<AccountData>(INITIAL_ACCOUNT_DATA);
   const [suggestion, setSuggestion] = useState<SuggestionDraft>(INITIAL_SUGGESTION);
   const [history, setHistory] = useState<SuggestionRecord[]>([]);
   const [authMessage, setAuthMessage] = useState("");
@@ -105,8 +115,14 @@ export function useCabinet({ features }: UseCabinetOptions) {
         ]);
 
         if (profileResponse.ok) {
-          const profilePayload = await readJson<{ profile: CabinetProfile }>(profileResponse);
+          const profilePayload = await readJson<{
+            profile: CabinetProfile;
+            accountData: AccountData;
+          }>(profileResponse);
           setProfile(profilePayload.profile);
+          if (profilePayload.accountData) {
+            setAccountData(profilePayload.accountData);
+          }
         }
 
         if (suggestionsResponse.ok) {
@@ -123,6 +139,28 @@ export function useCabinet({ features }: UseCabinetOptions) {
     };
 
     void bootstrap();
+  }, []);
+
+  // Handle OAuth redirect params (success / error)
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const params = new URLSearchParams(window.location.search);
+    const oauthSuccess = params.get("oauth_success");
+    const oauthError = params.get("oauth_error");
+
+    if (oauthSuccess || oauthError) {
+      // Strip the query param from the URL without a page reload
+      const cleanUrl = window.location.pathname;
+      window.history.replaceState({}, "", cleanUrl);
+
+      if (oauthSuccess) {
+        setAuthMessage(
+          `${oauthSuccess === "google" ? "Google" : "GitHub"} account connected successfully.`
+        );
+      } else if (oauthError) {
+        setAuthMessage(oauthError);
+      }
+    }
   }, []);
 
   const isAuthenticated = sessionUser !== null;
@@ -158,8 +196,9 @@ export function useCabinet({ features }: UseCabinetOptions) {
         return;
       }
 
-      const payload = await readJson<{ profile: CabinetProfile }>(response);
+      const payload = await readJson<{ profile: CabinetProfile; accountData: AccountData }>(response);
       setProfile(payload.profile);
+      if (payload.accountData) setAccountData(payload.accountData);
     } catch {
       setAuthMessage("Network error — profile changes could not be saved.");
     }
@@ -173,6 +212,112 @@ export function useCabinet({ features }: UseCabinetOptions) {
       }
       return nextProfile;
     });
+  };
+
+  const uploadAvatar = async (file: File): Promise<ActionFeedback> => {
+    try {
+      const response = await fetch("/api/cabinet/avatar", {
+        method: "POST",
+        credentials: "include",
+        headers: { "Content-Type": file.type },
+        body: file,
+      });
+
+      const payload = await readJson<{ ok?: boolean; avatarUrl?: string; message?: string }>(response);
+
+      if (!response.ok || !payload.avatarUrl) {
+        return {
+          ok: false,
+          title: "Upload failed",
+          description: payload.message ?? "Could not upload profile picture.",
+          tone: "error",
+        };
+      }
+
+      setAccountData((current) => ({ ...current, avatarUrl: payload.avatarUrl! }));
+      return {
+        ok: true,
+        title: "Photo updated",
+        description: "Your profile picture has been saved.",
+        tone: "success",
+      };
+    } catch {
+      return {
+        ok: false,
+        title: "Upload failed",
+        description: "Network error — could not upload photo.",
+        tone: "error",
+      };
+    }
+  };
+
+  const removeAvatar = async (): Promise<ActionFeedback> => {
+    try {
+      const response = await fetch("/api/cabinet/avatar", {
+        method: "DELETE",
+        credentials: "include",
+      });
+
+      if (!response.ok) {
+        const payload = await readJson<{ message?: string }>(response);
+        return {
+          ok: false,
+          title: "Remove failed",
+          description: payload.message ?? "Could not remove profile picture.",
+          tone: "error",
+        };
+      }
+
+      setAccountData((current) => ({ ...current, avatarUrl: "" }));
+      return {
+        ok: true,
+        title: "Photo removed",
+        description: "Your profile picture has been removed.",
+        tone: "info",
+      };
+    } catch {
+      return {
+        ok: false,
+        title: "Remove failed",
+        description: "Network error — could not remove photo.",
+        tone: "error",
+      };
+    }
+  };
+
+  const disconnectOAuth = async (provider: "google" | "github"): Promise<ActionFeedback> => {
+    try {
+      const response = await fetch(`/api/auth/oauth/${provider}`, {
+        method: "DELETE",
+        credentials: "include",
+      });
+
+      const payload = await readJson<{ ok?: boolean; accountData?: AccountData; message?: string }>(response);
+
+      if (!response.ok) {
+        return {
+          ok: false,
+          title: "Disconnect failed",
+          description: payload.message ?? `Could not disconnect ${provider}.`,
+          tone: "error",
+        };
+      }
+
+      if (payload.accountData) setAccountData(payload.accountData);
+      return {
+        ok: true,
+        title: "Account disconnected",
+        description: `Your ${provider === "google" ? "Google" : "GitHub"} account has been unlinked.`,
+        tone: "info",
+      };
+    } catch {
+      return {
+        ok: false,
+        title: "Disconnect failed",
+        description: "Network error.",
+        tone: "error",
+      };
+    }
   };
 
   const submitAuth = async (): Promise<ActionFeedback> => {
@@ -226,8 +371,12 @@ export function useCabinet({ features }: UseCabinetOptions) {
       });
 
       if (profileResponse.ok) {
-        const profilePayload = await readJson<{ profile: CabinetProfile }>(profileResponse);
+        const profilePayload = await readJson<{
+          profile: CabinetProfile;
+          accountData: AccountData;
+        }>(profileResponse);
         setProfile(profilePayload.profile);
+        if (profilePayload.accountData) setAccountData(profilePayload.accountData);
       }
 
       setHistory([]);
@@ -270,6 +419,7 @@ export function useCabinet({ features }: UseCabinetOptions) {
 
     setSessionUser(null);
     setProfile(INITIAL_PROFILE);
+    setAccountData(INITIAL_ACCOUNT_DATA);
     setHistory([]);
     setSuggestion(INITIAL_SUGGESTION);
 
@@ -336,6 +486,7 @@ export function useCabinet({ features }: UseCabinetOptions) {
   };
 
   return {
+    accountData,
     authMode,
     authForm,
     authMessage,
@@ -353,5 +504,8 @@ export function useCabinet({ features }: UseCabinetOptions) {
     submitSuggestion,
     suggestion,
     logout,
+    uploadAvatar,
+    removeAvatar,
+    disconnectOAuth,
   };
 }

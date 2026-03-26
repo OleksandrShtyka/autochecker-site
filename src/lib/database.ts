@@ -1,5 +1,6 @@
 import { randomUUID } from "node:crypto";
 import type {
+  AccountData,
   AdminSuggestionRecord,
   CabinetProfile,
   SessionUser,
@@ -17,6 +18,11 @@ type DbUserRow = {
   usage: string;
   favorite_feature: string;
   job_role: string;
+  avatar_url: string | null;
+  google_id: string | null;
+  google_email: string | null;
+  github_id: string | null;
+  github_username: string | null;
   created_at: string;
   updated_at: string;
 };
@@ -43,11 +49,12 @@ type DbSuggestionWithUserRow = DbSuggestionRow & {
   } | null;
 };
 
-const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-
 const SUPABASE_URL =
   process.env.NEXT_PUBLIC_SUPABASE_URL ?? process.env.SUPABASE_URL ?? "";
 const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY ?? "";
+
+const USER_SELECT =
+  "id,email,name,password_hash,auth_role,usage,favorite_feature,job_role,avatar_url,google_id,google_email,github_id,github_username,created_at,updated_at";
 
 function assertSupabaseEnv() {
   if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) {
@@ -99,7 +106,7 @@ async function supabaseRequest<T>(
   };
 }
 
-function mapUser(row: DbUserRow): SessionUser & { passwordHash: string; profile: CabinetProfile } {
+function mapUser(row: DbUserRow): SessionUser & { passwordHash: string; profile: CabinetProfile; accountData: AccountData } {
   return {
     id: row.id,
     email: row.email,
@@ -111,6 +118,13 @@ function mapUser(row: DbUserRow): SessionUser & { passwordHash: string; profile:
       role: row.job_role,
       usage: row.usage,
       favoriteFeature: row.favorite_feature,
+    },
+    accountData: {
+      avatarUrl: row.avatar_url ?? "",
+      connectedGoogle: !!row.google_id,
+      googleEmail: row.google_email ?? "",
+      connectedGithub: !!row.github_id,
+      githubUsername: row.github_username ?? "",
     },
   };
 }
@@ -128,31 +142,10 @@ function mapSuggestion(row: DbSuggestionRow): SuggestionRecord {
   };
 }
 
-async function findUsersByIds(userIds: string[]) {
-  if (!userIds.length) {
-    return [];
-  }
-
-  const safeIds = userIds.filter((id) => UUID_RE.test(id));
-  if (!safeIds.length) {
-    return [];
-  }
-
-  const inFilter = safeIds.join(",");
-  const query = new URLSearchParams({
-    select: "id,email,name,password_hash,auth_role,usage,favorite_feature,job_role,created_at,updated_at",
-    id: `in.(${inFilter})`,
-  });
-
-  const { data } = await supabaseRequest<DbUserRow[]>(`users?${query.toString()}`);
-  const rows = data ?? [];
-  return rows.map(mapUser);
-}
-
 export const database = {
   async findUserByEmail(email: string) {
     const query = new URLSearchParams({
-      select: "id,email,name,password_hash,auth_role,usage,favorite_feature,job_role,created_at,updated_at",
+      select: USER_SELECT,
       email: `eq.${email}`,
       limit: "1",
     });
@@ -164,8 +157,32 @@ export const database = {
 
   async findUserById(id: string) {
     const query = new URLSearchParams({
-      select: "id,email,name,password_hash,auth_role,usage,favorite_feature,job_role,created_at,updated_at",
+      select: USER_SELECT,
       id: `eq.${id}`,
+      limit: "1",
+    });
+
+    const { data } = await supabaseRequest<DbUserRow[]>(`users?${query.toString()}`);
+    const rows = data ?? [];
+    return rows[0] ? mapUser(rows[0]) : null;
+  },
+
+  async findUserByGoogleId(googleId: string) {
+    const query = new URLSearchParams({
+      select: USER_SELECT,
+      google_id: `eq.${googleId}`,
+      limit: "1",
+    });
+
+    const { data } = await supabaseRequest<DbUserRow[]>(`users?${query.toString()}`);
+    const rows = data ?? [];
+    return rows[0] ? mapUser(rows[0]) : null;
+  },
+
+  async findUserByGithubId(githubId: string) {
+    const query = new URLSearchParams({
+      select: USER_SELECT,
+      github_id: `eq.${githubId}`,
       limit: "1",
     });
 
@@ -209,7 +226,7 @@ export const database = {
   async updateUserProfile(userId: string, profile: CabinetProfile) {
     const query = new URLSearchParams({
       id: `eq.${userId}`,
-      select: "id,email,name,password_hash,auth_role,usage,favorite_feature,job_role,created_at,updated_at",
+      select: USER_SELECT,
     });
 
     const { data } = await supabaseRequest<DbUserRow[]>(
@@ -227,6 +244,75 @@ export const database = {
       {
         prefer: "return=representation",
       }
+    );
+
+    const rows = data ?? [];
+    return rows[0] ? mapUser(rows[0]) : null;
+  },
+
+  async updateUserAvatar(userId: string, avatarUrl: string) {
+    const query = new URLSearchParams({
+      id: `eq.${userId}`,
+      select: USER_SELECT,
+    });
+
+    const { data } = await supabaseRequest<DbUserRow[]>(
+      `users?${query.toString()}`,
+      {
+        method: "PATCH",
+        body: JSON.stringify({
+          avatar_url: avatarUrl,
+          updated_at: new Date().toISOString(),
+        }),
+      },
+      { prefer: "return=representation" }
+    );
+
+    const rows = data ?? [];
+    return rows[0] ? mapUser(rows[0]) : null;
+  },
+
+  async linkOAuthAccount(
+    userId: string,
+    provider: "google" | "github",
+    providerId: string,
+    meta: { email?: string; username?: string }
+  ) {
+    const query = new URLSearchParams({
+      id: `eq.${userId}`,
+      select: USER_SELECT,
+    });
+
+    const patch =
+      provider === "google"
+        ? { google_id: providerId, google_email: meta.email ?? "", updated_at: new Date().toISOString() }
+        : { github_id: providerId, github_username: meta.username ?? "", updated_at: new Date().toISOString() };
+
+    const { data } = await supabaseRequest<DbUserRow[]>(
+      `users?${query.toString()}`,
+      { method: "PATCH", body: JSON.stringify(patch) },
+      { prefer: "return=representation" }
+    );
+
+    const rows = data ?? [];
+    return rows[0] ? mapUser(rows[0]) : null;
+  },
+
+  async unlinkOAuthAccount(userId: string, provider: "google" | "github") {
+    const query = new URLSearchParams({
+      id: `eq.${userId}`,
+      select: USER_SELECT,
+    });
+
+    const patch =
+      provider === "google"
+        ? { google_id: null, google_email: null, updated_at: new Date().toISOString() }
+        : { github_id: null, github_username: null, updated_at: new Date().toISOString() };
+
+    const { data } = await supabaseRequest<DbUserRow[]>(
+      `users?${query.toString()}`,
+      { method: "PATCH", body: JSON.stringify(patch) },
+      { prefer: "return=representation" }
     );
 
     const rows = data ?? [];
@@ -330,5 +416,31 @@ export const database = {
       shipped: suggestions.filter((item) => item.status === "SHIPPED").length,
       rejected: suggestions.filter((item) => item.status === "REJECTED").length,
     };
+  },
+
+  async uploadAvatar(userId: string, data: ArrayBuffer, contentType: string) {
+    assertSupabaseEnv();
+    const ext = contentType.split("/")[1] ?? "jpg";
+    const path = `${userId}.${ext}`;
+
+    const response = await fetch(
+      `${SUPABASE_URL}/storage/v1/object/avatars/${path}`,
+      {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${SUPABASE_SERVICE_ROLE_KEY}`,
+          "Content-Type": contentType,
+          "x-upsert": "true",
+        },
+        body: data,
+      }
+    );
+
+    if (!response.ok) {
+      const text = await response.text();
+      throw new Error(`Avatar upload failed: ${response.status} ${text}`);
+    }
+
+    return `${SUPABASE_URL}/storage/v1/object/public/avatars/${path}`;
   },
 };

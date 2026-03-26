@@ -110,3 +110,11 @@ export type SocialLink = {
   url: string;
   accent: string;
 };
+
+export type AccountData = {
+  avatarUrl: string;
+  connectedGoogle: boolean;
+  googleEmail: string;
+  connectedGithub: boolean;
+  githubUsername: string;
+};

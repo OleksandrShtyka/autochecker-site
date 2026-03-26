@@ -7,6 +7,11 @@ create table if not exists public.users (
   usage text not null,
   favorite_feature text not null,
   job_role text not null,
+  avatar_url text,
+  google_id text unique,
+  google_email text,
+  github_id text unique,
+  github_username text,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );
