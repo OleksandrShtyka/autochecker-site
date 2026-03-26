@@ -1,40 +1,43 @@
-@import url('https://fonts.googleapis.com/css2?family=Cabinet+Grotesk:wght@400;500;700;800;900&family=Satoshi:wght@400;500;700&display=swap');
+@import url("https://fonts.googleapis.com/css2?family=Cabinet+Grotesk:wght@500;700;800&family=Satoshi:wght@400;500;700&display=swap");
 
 :root {
-  --bg-primary:    #08080E;
-  --bg-secondary:  #0E0E17;
-  --bg-card:       rgba(255, 255, 255, 0.03);
-  --bg-card-hover: rgba(255, 255, 255, 0.055);
-  --accent:        #6366F1;
-  --accent-light:  #818CF8;
-  --accent-violet: #A78BFA;
-  --accent-purple: #C084FC;
-  --accent-glow:   rgba(99, 102, 241, 0.18);
-  --text-primary:  #EDEDF2;
-  --text-secondary:#8B8BA3;
-  --text-muted:    #4E4E66;
-  --border:        rgba(255, 255, 255, 0.07);
-  --border-bright: rgba(255, 255, 255, 0.14);
-  --success:       #34D399;
-  --warning:       #FBBF24;
-  --danger:        #F87171;
+  --text-primary: #102844;
 }
 
-*, *::before, *::after {
+*,
+*::before,
+*::after {
   box-sizing: border-box;
   margin: 0;
   padding: 0;
 }
 
-html { scroll-behavior: smooth; }
+html {
+  scroll-behavior: smooth;
+}
 
 body {
-  font-family: 'Satoshi', sans-serif;
-  background: var(--bg-primary);
+  min-height: 100vh;
+  font-family: "Satoshi", sans-serif;
   color: var(--text-primary);
+  background: #edf4fb;
   -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
   overflow-x: hidden;
 }
 
-::selection { background: var(--accent); color: white; }
+a,
+button {
+  -webkit-tap-highlight-color: transparent;
+}
 
+img,
+svg {
+  display: block;
+  max-width: 100%;
+}
+
+::selection {
+  background: rgba(45, 166, 159, 0.22);
+  color: #0d2e47;
+}
