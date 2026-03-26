@@ -139,10 +139,43 @@ export async function GET(request: Request) {
       response.cookies.set(OAUTH_STATE_COOKIE, "", { expires: new Date(0), path: "/" });
       return response;
     } else {
-      // Login via GitHub — find existing linked account
+      // Not logged in — find or create account via GitHub
       targetUser = await database.findUserByGithubId(githubId);
+
       if (!targetUser) {
-        return errorRedirect("No account is linked to this GitHub account. Please log in with email and password first, then connect GitHub in Account Settings.");
+        const email = githubEmail || `github_${githubId}@noreply.github.com`;
+        const existingByEmail = email.includes("@noreply") ? null : await database.findUserByEmail(email);
+
+        if (existingByEmail) {
+          targetUser = await database.linkOAuthAccount(existingByEmail.id, "github", githubId, {
+            username: githubUser.login,
+          });
+        } else {
+          targetUser = await database.createUser({
+            email,
+            name: githubUser.name || githubUser.login,
+            passwordHash: "oauth_only",
+            authRole: "USER",
+            profile: {
+              name: githubUser.name || githubUser.login,
+              role: "Developer",
+              usage: "Daily",
+              favoriteFeature: "Sidebar Dashboard",
+            },
+          });
+          if (targetUser) {
+            targetUser = await database.linkOAuthAccount(targetUser.id, "github", githubId, {
+              username: githubUser.login,
+            });
+          }
+          if (targetUser && githubUser.avatar_url) {
+            targetUser = await database.updateUserAvatar(targetUser.id, githubUser.avatar_url);
+          }
+        }
+      }
+
+      if (!targetUser) {
+        return errorRedirect("Failed to sign in with GitHub.");
       }
 
       const successUrl = new URL("/cabinet", siteUrl());

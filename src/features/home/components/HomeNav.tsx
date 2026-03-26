@@ -8,6 +8,7 @@ import { cx } from "../utils";
 type HomeNavProps = {
   activeSection: string;
   isAuthenticated: boolean;
+  isAdmin: boolean;
   accountData: AccountData;
   userName: string;
   userEmail: string;
@@ -31,6 +32,7 @@ type HomeNavProps = {
 export function HomeNav({
   activeSection,
   isAuthenticated,
+  isAdmin,
   accountData,
   userName,
   userEmail,
@@ -147,6 +149,17 @@ export function HomeNav({
                   <span className={styles.navDropdownItemIcon}>◈</span>
                   Settings
                 </button>
+
+                {isAdmin ? (
+                  <button
+                    type="button"
+                    className={styles.navDropdownItem}
+                    onClick={() => { setDropdownOpen(false); onOpenDashboard(); }}
+                  >
+                    <span className={styles.navDropdownItemIcon}>⬡</span>
+                    Admin Panel
+                  </button>
+                ) : null}
 
                 <div className={styles.navDropdownDivider} />
 

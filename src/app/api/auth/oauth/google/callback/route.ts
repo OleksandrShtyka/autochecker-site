@@ -109,10 +109,43 @@ export async function GET(request: Request) {
       response.cookies.set(OAUTH_STATE_COOKIE, "", { expires: new Date(0), path: "/" });
       return response;
     } else {
-      // Login via Google — find existing linked account
+      // Not logged in — find or create account via Google
       targetUser = await database.findUserByGoogleId(googleUser.id);
+
       if (!targetUser) {
-        return errorRedirect("No account is linked to this Google account. Please log in with email and password first, then connect Google in Account Settings.");
+        // Check if email already exists — link Google to that account
+        const existingByEmail = await database.findUserByEmail(googleUser.email);
+        if (existingByEmail) {
+          targetUser = await database.linkOAuthAccount(existingByEmail.id, "google", googleUser.id, {
+            email: googleUser.email,
+          });
+        } else {
+          // Create new account
+          targetUser = await database.createUser({
+            email: googleUser.email,
+            name: googleUser.name || googleUser.email.split("@")[0],
+            passwordHash: "oauth_only",
+            authRole: "USER",
+            profile: {
+              name: googleUser.name || googleUser.email.split("@")[0],
+              role: "Developer",
+              usage: "Daily",
+              favoriteFeature: "Sidebar Dashboard",
+            },
+          });
+          if (targetUser) {
+            targetUser = await database.linkOAuthAccount(targetUser.id, "google", googleUser.id, {
+              email: googleUser.email,
+            });
+          }
+          if (targetUser && googleUser.picture) {
+            targetUser = await database.updateUserAvatar(targetUser.id, googleUser.picture);
+          }
+        }
+      }
+
+      if (!targetUser) {
+        return errorRedirect("Failed to sign in with Google.");
       }
 
       const successUrl = new URL("/cabinet", siteUrl());

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import {
   CABINET_ROLE_OPTIONS,
@@ -80,9 +80,23 @@ export function CabinetPage() {
     pushToast(feedback);
   };
 
+  const [topbarDropdown, setTopbarDropdown] = useState(false);
+  const topbarDropdownRef = useRef<HTMLDivElement>(null);
+
   useEffect(() => {
     setIsMounted(true);
   }, []);
+
+  useEffect(() => {
+    if (!topbarDropdown) return;
+    const handler = (e: MouseEvent) => {
+      if (topbarDropdownRef.current && !topbarDropdownRef.current.contains(e.target as Node)) {
+        setTopbarDropdown(false);
+      }
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, [topbarDropdown]);
 
   return (
     <main className={styles.main} data-theme={theme}>
@@ -114,17 +128,12 @@ export function CabinetPage() {
 
               <div className={styles.cabinetPageActions}>
                 {isAuthenticated ? (
-                  <>
-                    {isAdmin ? (
-                      <button
-                        type="button"
-                        className={styles.navGhost}
-                        onClick={() => router.push("/admin")}
-                      >
-                        Admin Panel
-                      </button>
-                    ) : null}
-                    <div className={styles.topbarUser}>
+                  <div className={styles.navProfileWrap} ref={topbarDropdownRef}>
+                    <button
+                      type="button"
+                      className={cx(styles.topbarUser, topbarDropdown && styles.topbarUserOpen)}
+                      onClick={() => setTopbarDropdown((v) => !v)}
+                    >
                       {accountData.avatarUrl ? (
                         // eslint-disable-next-line @next/next/no-img-element
                         <img src={accountData.avatarUrl} alt="" className={styles.topbarAvatar} />
@@ -134,11 +143,50 @@ export function CabinetPage() {
                         </div>
                       )}
                       <span className={styles.topbarName}>{sessionUser?.name}</span>
-                    </div>
-                    <button type="button" className={styles.navCta} onClick={() => void handleLogout()}>
-                      Logout
+                      <span className={styles.topbarChevron}>{topbarDropdown ? "▴" : "▾"}</span>
                     </button>
-                  </>
+
+                    <div className={cx(styles.navDropdown, topbarDropdown && styles.navDropdownOpen)}>
+                      <div className={styles.navDropdownHeader}>
+                        {accountData.avatarUrl ? (
+                          // eslint-disable-next-line @next/next/no-img-element
+                          <img src={accountData.avatarUrl} alt="" className={styles.navDropdownAvatar} />
+                        ) : (
+                          <div className={styles.navDropdownAvatarPlaceholder}>
+                            {(sessionUser?.name ?? sessionUser?.email ?? "?").slice(0, 1).toUpperCase()}
+                          </div>
+                        )}
+                        <div className={styles.navDropdownUserInfo}>
+                          <span className={styles.navDropdownName}>{sessionUser?.name}</span>
+                          <span className={styles.navDropdownEmail}>{sessionUser?.email}</span>
+                        </div>
+                      </div>
+
+                      <div className={styles.navDropdownDivider} />
+
+                      {isAdmin ? (
+                        <button
+                          type="button"
+                          className={styles.navDropdownItem}
+                          onClick={() => { setTopbarDropdown(false); router.push("/admin"); }}
+                        >
+                          <span className={styles.navDropdownItemIcon}>⬡</span>
+                          Admin Panel
+                        </button>
+                      ) : null}
+
+                      <div className={styles.navDropdownDivider} />
+
+                      <button
+                        type="button"
+                        className={cx(styles.navDropdownItem, styles.navDropdownItemLogout)}
+                        onClick={() => { setTopbarDropdown(false); void handleLogout(); }}
+                      >
+                        <span className={styles.navDropdownItemIcon}>→</span>
+                        Sign out
+                      </button>
+                    </div>
+                  </div>
                 ) : null}
               </div>
             </div>

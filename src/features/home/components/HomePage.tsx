@@ -55,6 +55,7 @@ export function HomePage() {
     authForm,
     authMessage,
     authMode,
+    isAdmin,
     isAuthenticated,
     sessionUser,
     setAuthField,
@@ -137,6 +138,7 @@ export function HomePage() {
           <HomeNav
             activeSection={activeSection}
             isAuthenticated={isAuthenticated}
+            isAdmin={isAdmin}
             accountData={accountData}
             userName={sessionUser?.name ?? ""}
             userEmail={sessionUser?.email ?? ""}

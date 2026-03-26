@@ -471,6 +471,21 @@
   border-radius: 999px;
   border: 1px solid var(--surface-border);
   background: var(--surface-soft), var(--surface-tint);
+  cursor: pointer;
+  font: inherit;
+  transition: border-color 180ms ease, box-shadow 180ms ease;
+}
+
+.topbarUser:hover,
+.topbarUserOpen {
+  border-color: rgba(93, 212, 198, 0.5);
+  box-shadow: 0 0 0 3px rgba(93, 212, 198, 0.1);
+}
+
+.topbarChevron {
+  font-size: 0.65rem;
+  color: var(--text-tertiary);
+  margin-left: 0.1rem;
 }
 
 .topbarAvatar {
