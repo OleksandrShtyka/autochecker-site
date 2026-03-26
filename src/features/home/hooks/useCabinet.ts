@@ -141,27 +141,6 @@ export function useCabinet({ features }: UseCabinetOptions) {
     void bootstrap();
   }, []);
 
-  // Handle OAuth redirect params (success / error)
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-    const params = new URLSearchParams(window.location.search);
-    const oauthSuccess = params.get("oauth_success");
-    const oauthError = params.get("oauth_error");
-
-    if (oauthSuccess || oauthError) {
-      // Strip the query param from the URL without a page reload
-      const cleanUrl = window.location.pathname;
-      window.history.replaceState({}, "", cleanUrl);
-
-      if (oauthSuccess) {
-        setAuthMessage(
-          `${oauthSuccess === "google" ? "Google" : "GitHub"} account connected successfully.`
-        );
-      } else if (oauthError) {
-        setAuthMessage(oauthError);
-      }
-    }
-  }, []);
 
   const isAuthenticated = sessionUser !== null;
   const isAdmin = sessionUser?.role === "ADMIN";

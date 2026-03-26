@@ -85,6 +85,34 @@ export function CabinetPage() {
 
   useEffect(() => {
     setIsMounted(true);
+
+    const params = new URLSearchParams(window.location.search);
+    const oauthSuccess = params.get("oauth_success");
+    const oauthError = params.get("oauth_error");
+
+    if (oauthSuccess || oauthError) {
+      window.history.replaceState({}, "", window.location.pathname);
+
+      if (oauthSuccess) {
+        const isLogin = oauthSuccess.endsWith("_login");
+        const provider = oauthSuccess.startsWith("google") ? "Google" : "GitHub";
+        pushToast({
+          ok: true,
+          title: isLogin ? `Signed in with ${provider}` : `${provider} connected`,
+          description: isLogin
+            ? `Welcome! You are now signed in via ${provider}.`
+            : `Your ${provider} account has been linked successfully.`,
+          tone: "success",
+        });
+      } else if (oauthError) {
+        pushToast({
+          ok: false,
+          title: "Connection failed",
+          description: oauthError,
+          tone: "error",
+        });
+      }
+    }
   }, []);
 
   useEffect(() => {

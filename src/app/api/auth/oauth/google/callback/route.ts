@@ -103,7 +103,7 @@ export async function GET(request: Request) {
       }
 
       const successUrl = new URL("/cabinet", siteUrl());
-      successUrl.searchParams.set("oauth_success", "google");
+      successUrl.searchParams.set("oauth_success", session ? "google" : "google_login");
       const response = NextResponse.redirect(successUrl.toString());
       // Clear state cookie
       response.cookies.set(OAUTH_STATE_COOKIE, "", { expires: new Date(0), path: "/" });
