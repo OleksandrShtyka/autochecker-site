@@ -490,6 +490,25 @@ export const database = {
     const ext = contentType.split("/")[1] ?? "jpg";
     const path = `${userId}.${ext}`;
 
+    // Ensure the avatars bucket exists (create if missing)
+    const bucketCheck = await fetch(`${SUPABASE_URL}/storage/v1/bucket/avatars`, {
+      headers: {
+        Authorization: `Bearer ${SUPABASE_SERVICE_ROLE_KEY}`,
+        apikey: SUPABASE_SERVICE_ROLE_KEY,
+      },
+    });
+    if (bucketCheck.status === 400 || bucketCheck.status === 404) {
+      await fetch(`${SUPABASE_URL}/storage/v1/bucket`, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${SUPABASE_SERVICE_ROLE_KEY}`,
+          apikey: SUPABASE_SERVICE_ROLE_KEY,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ id: "avatars", name: "avatars", public: true }),
+      });
+    }
+
     // POST with x-upsert:true is the correct Supabase Storage upsert
     const response = await fetch(
       `${SUPABASE_URL}/storage/v1/object/avatars/${path}`,
