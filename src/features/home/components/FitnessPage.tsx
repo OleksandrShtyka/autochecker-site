@@ -60,11 +60,11 @@ export function FitnessPage() {
 
   const {
     supplements, statuses, sessions, roi, loading, error,
-    profileDraft, setProfileDraft, saveProfile,
+    profileDraft, setProfileDraft, saveProfile, profileError,
     suppForm, setSuppForm, suppEditId, suppModalOpen, setSuppModalOpen,
-    openAddSupp, openEditSupp, submitSupp, deleteSupp,
+    openAddSupp, openEditSupp, submitSupp, deleteSupp, suppError,
     sessForm, setSessForm, sessModalOpen, setSessModalOpen,
-    openAddSession, submitSession, deleteSession,
+    openAddSession, submitSession, deleteSession, sessError,
     addExercise, updateExercise, removeExercise,
   } = useFitness();
 
@@ -190,6 +190,7 @@ export function FitnessPage() {
               >
                 {profileSaved ? "Saved ✓" : "Save profile"}
               </button>
+              {profileError && <p style={{ color: "#ef4444", fontSize: 13, marginTop: 6 }}>{profileError}</p>}
             </div>
 
             {/* ── Supplements ── */}
@@ -325,6 +326,7 @@ export function FitnessPage() {
                   onChange={(e) => setSuppForm((p) => ({ ...p, notes: e.target.value }))} placeholder="..." />
               </label>
             </div>
+            {suppError && <p style={{ color: "#ef4444", fontSize: 13, padding: "0 20px 8px" }}>{suppError}</p>}
             <div className={fitnessStyles.modalFoot}>
               <button type="button" className={fitnessStyles.btnSecondary} onClick={() => setSuppModalOpen(false)}>Cancel</button>
               <button type="button" className={fitnessStyles.btnPrimary} onClick={() => void submitSupp()}
@@ -409,6 +411,7 @@ export function FitnessPage() {
                 </div>
               )}
             </div>
+            {sessError && <p style={{ color: "#ef4444", fontSize: 13, padding: "0 20px 8px" }}>{sessError}</p>}
             <div className={fitnessStyles.modalFoot}>
               <button type="button" className={fitnessStyles.btnSecondary} onClick={() => setSessModalOpen(false)}>Cancel</button>
               <button type="button" className={fitnessStyles.btnPrimary} onClick={() => void submitSession()}>

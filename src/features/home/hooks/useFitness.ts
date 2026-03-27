@@ -16,7 +16,11 @@ async function api<T>(url: string, init?: RequestInit): Promise<T> {
   const res = await fetch(url, { ...init, headers: { "Content-Type": "application/json", ...init?.headers } });
   const text = await res.text();
   if (!text) return {} as T;
-  return JSON.parse(text) as T;
+  const json = JSON.parse(text) as T & { message?: string };
+  if (!res.ok) {
+    throw new Error((json as { message?: string }).message ?? `Request failed: ${res.status}`);
+  }
+  return json;
 }
 
 export type SupplementDraft = {
@@ -64,6 +68,11 @@ export function useFitness() {
     fitnessBadge: "Beginner",
   });
 
+  // ── form errors ───────────────────────────────────────────────
+  const [suppError, setSuppError] = useState<string | null>(null);
+  const [sessError, setSessError] = useState<string | null>(null);
+  const [profileError, setProfileError] = useState<string | null>(null);
+
   // ── supplement form ───────────────────────────────────────────
   const [suppForm, setSuppForm] = useState<SupplementDraft>(BLANK_SUPPLEMENT);
   const [suppEditId, setSuppEditId] = useState<string | null>(null);
@@ -108,19 +117,24 @@ export function useFitness() {
 
   // ── profile save ──────────────────────────────────────────────
   const saveProfile = useCallback(async () => {
-    const res = await api<{ profile: FitnessProfile }>("/api/fitness/profile", {
-      method: "PATCH",
-      body: JSON.stringify({
-        monthlyGymCost: parseFloat(profileDraft.monthlyGymCost) || 0,
-        fitnessGoal: profileDraft.fitnessGoal,
-        fitnessBadge: profileDraft.fitnessBadge,
-      }),
-    });
-    setProfile(res.profile);
-    // refresh ROI after cost change
-    const roiRes = await api<{ roi: GymRoi | null }>("/api/fitness/roi");
-    setRoi(roiRes.roi);
-    return { ok: true };
+    setProfileError(null);
+    try {
+      const res = await api<{ profile: FitnessProfile }>("/api/fitness/profile", {
+        method: "PATCH",
+        body: JSON.stringify({
+          monthlyGymCost: parseFloat(profileDraft.monthlyGymCost) || 0,
+          fitnessGoal: profileDraft.fitnessGoal,
+          fitnessBadge: profileDraft.fitnessBadge,
+        }),
+      });
+      setProfile(res.profile);
+      const roiRes = await api<{ roi: GymRoi | null }>("/api/fitness/roi");
+      setRoi(roiRes.roi);
+      return { ok: true };
+    } catch (e) {
+      setProfileError(e instanceof Error ? e.message : "Failed to save profile.");
+      return { ok: false };
+    }
   }, [profileDraft]);
 
   // ── supplement CRUD ───────────────────────────────────────────
@@ -145,6 +159,7 @@ export function useFitness() {
   }, []);
 
   const submitSupp = useCallback(async () => {
+    setSuppError(null);
     const payload = {
       name: suppForm.name,
       totalWeightG: parseFloat(suppForm.totalWeightG),
@@ -155,22 +170,26 @@ export function useFitness() {
       notes: suppForm.notes || null,
     };
 
-    if (suppEditId) {
-      await api(`/api/fitness/supplements/${suppEditId}`, {
-        method: "PATCH",
-        body: JSON.stringify(payload),
-      });
-    } else {
-      await api("/api/fitness/supplements", {
-        method: "POST",
-        body: JSON.stringify(payload),
-      });
+    try {
+      if (suppEditId) {
+        await api(`/api/fitness/supplements/${suppEditId}`, {
+          method: "PATCH",
+          body: JSON.stringify(payload),
+        });
+      } else {
+        await api("/api/fitness/supplements", {
+          method: "POST",
+          body: JSON.stringify(payload),
+        });
+      }
+      const res = await api<{ supplements: Supplement[]; statuses: SupplementStatus[] }>("/api/fitness/supplements");
+      setSupplements(res.supplements ?? []);
+      setStatuses(res.statuses ?? []);
+      setSuppModalOpen(false);
+    } catch (e) {
+      console.error("[submitSupp]", e);
+      setSuppError(e instanceof Error ? e.message : "Failed to save supplement.");
     }
-
-    setSuppModalOpen(false);
-    const res = await api<{ supplements: Supplement[]; statuses: SupplementStatus[] }>("/api/fitness/supplements");
-    setSupplements(res.supplements ?? []);
-    setStatuses(res.statuses ?? []);
   }, [suppForm, suppEditId]);
 
   const deleteSupp = useCallback(async (id: string) => {
@@ -186,27 +205,31 @@ export function useFitness() {
   }, []);
 
   const submitSession = useCallback(async () => {
-    // auto-calc volume from exercises
+    setSessError(null);
     const volumeKg = sessForm.exercises.reduce(
       (sum, ex) => sum + ex.sets * ex.reps * ex.weightKg, 0
     );
-    await api("/api/fitness/sessions", {
-      method: "POST",
-      body: JSON.stringify({
-        date: sessForm.date,
-        durationMin: parseInt(sessForm.durationMin) || 60,
-        workoutType: sessForm.workoutType,
-        volumeKg,
-        exercises: sessForm.exercises,
-        notes: sessForm.notes || null,
-      }),
-    });
-    setSessModalOpen(false);
-    const res = await api<{ sessions: GymSession[] }>("/api/fitness/sessions");
-    setSessions(res.sessions ?? []);
-    // refresh ROI
-    const roiRes = await api<{ roi: GymRoi | null }>("/api/fitness/roi");
-    setRoi(roiRes.roi);
+    try {
+      await api("/api/fitness/sessions", {
+        method: "POST",
+        body: JSON.stringify({
+          date: sessForm.date,
+          durationMin: parseInt(sessForm.durationMin) || 60,
+          workoutType: sessForm.workoutType,
+          volumeKg,
+          exercises: sessForm.exercises,
+          notes: sessForm.notes || null,
+        }),
+      });
+      const res = await api<{ sessions: GymSession[] }>("/api/fitness/sessions");
+      setSessions(res.sessions ?? []);
+      const roiRes = await api<{ roi: GymRoi | null }>("/api/fitness/roi");
+      setRoi(roiRes.roi);
+      setSessModalOpen(false);
+    } catch (e) {
+      console.error("[submitSession]", e);
+      setSessError(e instanceof Error ? e.message : "Failed to save session.");
+    }
   }, [sessForm]);
 
   const deleteSession = useCallback(async (id: string) => {
@@ -242,13 +265,13 @@ export function useFitness() {
     // data
     profile, supplements, statuses, sessions, roi, loading, error,
     // profile
-    profileDraft, setProfileDraft, saveProfile,
+    profileDraft, setProfileDraft, saveProfile, profileError,
     // supplement modal
     suppForm, setSuppForm, suppEditId, suppModalOpen, setSuppModalOpen,
-    openAddSupp, openEditSupp, submitSupp, deleteSupp,
+    openAddSupp, openEditSupp, submitSupp, deleteSupp, suppError,
     // session modal
     sessForm, setSessForm, sessModalOpen, setSessModalOpen,
-    openAddSession, submitSession, deleteSession,
+    openAddSession, submitSession, deleteSession, sessError,
     // exercises
     addExercise, updateExercise, removeExercise,
   };

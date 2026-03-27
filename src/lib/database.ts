@@ -525,7 +525,7 @@ export const database = {
       monthly_gym_cost: number;
       fitness_goal: FitnessGoal;
       fitness_badge: string;
-    }[]>(`fitness_profile?user_id=eq.${encodeURIComponent(userId)}&select=*`, {}, { allowEmpty: true });
+    }[]>(`fitness_profile?user_id=eq.${encodeURIComponent(userId)}&select=*`, {});
     const row = data?.[0];
     if (!row) return null;
     return {
@@ -556,7 +556,7 @@ export const database = {
       total_weight_g: number; serving_size_g: number; servings_per_day: number;
       price: number; purchase_date: string; notes: string | null;
       created_at: string; updated_at: string;
-    }[]>(`supplements?user_id=eq.${encodeURIComponent(userId)}&order=purchase_date.desc&select=*`, {}, { allowEmpty: true });
+    }[]>(`supplements?user_id=eq.${encodeURIComponent(userId)}&order=purchase_date.desc&select=*`, {});
     return (data ?? []).map((r) => ({
       id: r.id, userId: r.user_id, name: r.name,
       totalWeightG: r.total_weight_g, servingSizeG: r.serving_size_g,
@@ -625,8 +625,7 @@ export const database = {
       days_left: number; depletion_date: string; cost_per_serving: number;
     }[]>(
       `rpc/supplement_statuses`,
-      { method: "POST", body: JSON.stringify({ p_user_id: userId }) },
-      { allowEmpty: true }
+      { method: "POST", body: JSON.stringify({ p_user_id: userId }) }
     );
     return (data ?? []).map((r) => ({
       id: r.id, name: r.name, remainingPct: r.remaining_pct,
@@ -644,8 +643,7 @@ export const database = {
       notes: string | null; created_at: string; updated_at: string;
     }[]>(
       `gym_sessions?user_id=eq.${encodeURIComponent(userId)}&order=date.desc&limit=${limit}&select=*`,
-      {},
-      { allowEmpty: true }
+      {}
     );
     return (data ?? []).map((r) => ({
       id: r.id, userId: r.user_id, date: r.date,
@@ -691,8 +689,7 @@ export const database = {
       sessions_count: number; monthly_cost: number; cost_per_session: number;
     }[]>(
       "rpc/gym_roi",
-      { method: "POST", body: JSON.stringify({ p_user_id: userId, p_month: month }) },
-      { allowEmpty: true }
+      { method: "POST", body: JSON.stringify({ p_user_id: userId, p_month: month }) }
     );
     const r = data?.[0];
     if (!r) return null;
