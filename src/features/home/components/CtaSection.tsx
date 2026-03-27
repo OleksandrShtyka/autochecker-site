@@ -35,7 +35,7 @@ export function CtaSection({
             download="autochecker.apk"
             className={styles.btnSecondary}
           >
-            📱 Download Android App
+            🏋️ Download Fitness Tracker for Android
           </a>
         </div>
       </div>

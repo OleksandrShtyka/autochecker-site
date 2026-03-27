@@ -133,7 +133,7 @@ export function HeroSection({
             download="autochecker.apk"
             className={styles.btnSecondary}
           >
-            📱 Download Android App
+            🏋️ Download Fitness Tracker for Android
           </a>
         </div>
 
