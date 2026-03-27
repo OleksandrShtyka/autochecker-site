@@ -490,11 +490,11 @@ export const database = {
     const ext = contentType.split("/")[1] ?? "jpg";
     const path = `${userId}.${ext}`;
 
-    // Use PUT for reliable upsert (POST can 409 if the file already exists)
+    // POST with x-upsert:true is the correct Supabase Storage upsert
     const response = await fetch(
       `${SUPABASE_URL}/storage/v1/object/avatars/${path}`,
       {
-        method: "PUT",
+        method: "POST",
         headers: {
           Authorization: `Bearer ${SUPABASE_SERVICE_ROLE_KEY}`,
           "Content-Type": contentType,
@@ -506,10 +506,10 @@ export const database = {
 
     if (!response.ok) {
       const text = await response.text();
-      throw new Error(`Avatar upload failed: ${response.status} ${text}`);
+      throw new Error(`Supabase Storage error ${response.status}: ${text}`);
     }
 
-    // Append cache-busting timestamp so browsers don't serve stale images
+    // Cache-busting timestamp so browsers don't serve the old cached image
     return `${SUPABASE_URL}/storage/v1/object/public/avatars/${path}?t=${Date.now()}`;
   },
 
