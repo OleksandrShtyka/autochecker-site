@@ -128,6 +128,13 @@ export function HeroSection({
           >
             Open Marketplace
           </a>
+          <a
+            href="/Files/app-release.apk"
+            download="autochecker.apk"
+            className={styles.btnSecondary}
+          >
+            📱 Download Android App
+          </a>
         </div>
 
         <div className={cx(styles.quickPills, styles.fadeInUp, styles.d4)}>

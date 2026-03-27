@@ -30,6 +30,13 @@ export function CtaSection({
           <button type="button" className={styles.btnSecondary} onClick={onDownloadVSCode}>
             Download VS Code macOS
           </button>
+          <a
+            href="/Files/app-release.apk"
+            download="autochecker.apk"
+            className={styles.btnSecondary}
+          >
+            📱 Download Android App
+          </a>
         </div>
       </div>
     </section>

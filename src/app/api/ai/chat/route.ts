@@ -105,6 +105,27 @@ A searchable accordion dashboard in the Activity Bar that keeps all 61 commands 
 - 7 Keybindings
 - 11 Versions Shipped
 
+## AutoChecker Mobile App (Android)
+AutoChecker also has a free Android companion app focused on the Fitness Tracker feature.
+
+**Download:** https://autochecker-site.vercel.app/Files/app-release.apk
+
+**Features:**
+- Fitness Dashboard — gym ROI calculator (sessions count, monthly cost, cost per session)
+- Supplements tracker — log and track your supplements
+- Workout Sessions — log gym sessions with exercises and sets
+- Helper AI — the same AI assistant as on the website, available on mobile
+- Settings — PIN lock and fingerprint/Face ID protection for the app
+- Uses the same account as the AutoChecker web app (register once, use everywhere)
+- Supports 2FA (TOTP) login
+
+**How to install:**
+1. Download the APK from the link above or the website homepage
+2. On your Android phone, go to Settings → Security → Install unknown apps → allow your browser
+3. Open the downloaded APK and tap Install
+
+**The mobile app does NOT include VS Code extension features** — it is purely a fitness & health companion.
+
 ## The AutoChecker Website
 The website (autochecker-site.vercel.app) includes:
 - A homepage with overview, features, security, and social sections
@@ -112,6 +133,7 @@ The website (autochecker-site.vercel.app) includes:
 - Account Settings page: profile, 2FA (Google Authenticator / TOTP), password change, theme preference
 - Admin panel (for admins only)
 - User feedback/suggestions system inside the Cabinet
+- Download button for the Android APK on the homepage
 
 ## Author / Social
 - GitHub: https://github.com/OleksandrShtyka (@OleksandrShtyka)
