@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import styles from "../styles";
 import type { Feature, PreviewItem } from "../types";
 import { cx } from "../utils";
+import { useLang } from "../context/LangContext";
 
 const HERO_PHRASES = [
   "Two moods. Smooth like glass.",
@@ -90,6 +91,7 @@ export function HeroSection({
   onDownloadVSCode,
   onOpenFeature,
 }: HeroSectionProps) {
+  const { t } = useLang();
   return (
     <section className={styles.hero} id="top">
       <div className={styles.heroCopy}>
@@ -115,7 +117,7 @@ export function HeroSection({
 
         <div className={cx(styles.heroCtas, styles.fadeInUp, styles.d3)}>
           <button type="button" className={styles.btnPrimary} onClick={onDownloadVsix}>
-            Download AutoChecker
+            {t("hero_cta")}
           </button>
           <button type="button" className={styles.btnSecondary} onClick={onDownloadVSCode}>
             Download VS Code for macOS
@@ -133,7 +135,7 @@ export function HeroSection({
             download="autochecker.apk"
             className={styles.btnSecondary}
           >
-            🏋️ Download Fitness Tracker for Android
+            {t("hero_download")}
           </a>
         </div>
 

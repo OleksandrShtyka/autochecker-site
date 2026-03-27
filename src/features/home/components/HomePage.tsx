@@ -39,8 +39,9 @@ import { SecuritySection } from "./SecuritySection";
 import { SocialSection } from "./SocialSection";
 import { StatsSection } from "./StatsSection";
 import { ToastStack } from "./ToastStack";
+import { LangProvider } from "../context/LangContext";
 
-export function HomePage() {
+function HomePageInner() {
   const router = useRouter();
   const [isMounted, setIsMounted] = useState(false);
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
@@ -204,5 +205,13 @@ export function HomePage() {
         </>
       )}
     </main>
+  );
+}
+
+export function HomePage() {
+  return (
+    <LangProvider>
+      <HomePageInner />
+    </LangProvider>
   );
 }

@@ -1,4 +1,7 @@
+"use client";
+
 import styles from "../styles";
+import { useLang } from "../context/LangContext";
 
 type CtaSectionProps = {
   onDownloadVsix: () => void;
@@ -9,6 +12,7 @@ export function CtaSection({
   onDownloadVsix,
   onDownloadVSCode,
 }: CtaSectionProps) {
+  const { t } = useLang();
   return (
     <section className={styles.cta}>
       <div className={styles.ctaInner}>
@@ -25,7 +29,7 @@ export function CtaSection({
         </div>
         <div className={styles.ctaActions}>
           <button type="button" className={styles.btnPrimary} onClick={onDownloadVsix}>
-            Download AutoChecker
+            {t("cta_btn")}
           </button>
           <button type="button" className={styles.btnSecondary} onClick={onDownloadVSCode}>
             Download VS Code macOS
@@ -35,7 +39,7 @@ export function CtaSection({
             download="autochecker.apk"
             className={styles.btnSecondary}
           >
-            🏋️ Download Fitness Tracker for Android
+            {t("cta_mobile")}
           </a>
         </div>
       </div>

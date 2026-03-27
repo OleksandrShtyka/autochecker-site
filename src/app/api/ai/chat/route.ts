@@ -208,7 +208,7 @@ export async function POST(request: Request) {
     );
   }
 
-  const body = (await request.json()) as { messages?: ChatMessage[]; settings?: RequestSettings };
+  const body = (await request.json()) as { messages?: ChatMessage[]; settings?: RequestSettings; context?: string };
   const messages = body.messages;
 
   if (!Array.isArray(messages) || messages.length === 0) {
@@ -218,10 +218,13 @@ export async function POST(request: Request) {
   const groq = new Groq({ apiKey });
 
   try {
+    const systemContent = buildPrompt(body.settings) +
+      (body.context ? `\n\n## Current User Fitness Data\n${body.context}` : '');
+
     const completion = await groq.chat.completions.create({
       model: "llama-3.3-70b-versatile",
       messages: [
-        { role: "system", content: buildPrompt(body.settings) },
+        { role: "system", content: systemContent },
         ...messages.map((m) => ({ role: m.role, content: m.content })),
       ],
       max_tokens: 1024,

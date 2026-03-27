@@ -4,6 +4,7 @@ import { useEffect, useRef, useState, type MutableRefObject } from "react";
 import type { AccountData, NavItem } from "../types";
 import styles from "../styles";
 import { cx } from "../utils";
+import { useLang } from "../context/LangContext";
 
 type HomeNavProps = {
   activeSection: string;
@@ -53,7 +54,13 @@ export function HomeNav({
   version,
 }: HomeNavProps) {
   const [dropdownOpen, setDropdownOpen] = useState(false);
+  const [avatarError, setAvatarError] = useState(false);
   const wrapRef = useRef<HTMLDivElement>(null);
+  const { lang, setLang, t } = useLang();
+
+  useEffect(() => {
+    setAvatarError(false);
+  }, [accountData.avatarUrl]);
 
   useEffect(() => {
     if (!dropdownOpen) return;
@@ -96,13 +103,33 @@ export function HomeNav({
                 className={cx(styles.navLink, activeSection === item.id && styles.navLinkActive)}
                 onClick={() => onScrollToSection(item.id)}
               >
-                {item.label}
+                {t(`nav_${item.id}`) || item.label}
               </button>
             ))}
             <a href={githubUrl} target="_blank" rel="noopener noreferrer" className={styles.navLink}>
               GitHub
             </a>
           </div>
+
+          {/* Language toggle */}
+          <button
+            type="button"
+            onClick={() => setLang(lang === "en" ? "uk" : "en")}
+            title={lang === "en" ? "Switch to Ukrainian" : "Переключити на English"}
+            style={{
+              background: "none",
+              border: "1px solid rgba(14,159,152,0.35)",
+              borderRadius: "6px",
+              color: "var(--text-muted, #64748b)",
+              cursor: "pointer",
+              fontSize: "13px",
+              padding: "3px 8px",
+              lineHeight: 1.4,
+              fontFamily: "inherit",
+            }}
+          >
+            {lang === "en" ? "🇺🇦 UA" : "🇬🇧 EN"}
+          </button>
 
           {isAuthenticated ? (
             <div className={styles.navProfileWrap} ref={wrapRef}>
@@ -112,9 +139,9 @@ export function HomeNav({
                 onClick={() => setDropdownOpen((v) => !v)}
                 aria-label="Profile menu"
               >
-                {accountData.avatarUrl ? (
+                {accountData.avatarUrl && !avatarError ? (
                   // eslint-disable-next-line @next/next/no-img-element
-                  <img src={accountData.avatarUrl} alt="" className={styles.navProfileAvatar} />
+                  <img src={accountData.avatarUrl} alt="" className={styles.navProfileAvatar} onError={() => setAvatarError(true)} />
                 ) : (
                   <span className={styles.navProfileInitials}>{initials}</span>
                 )}
@@ -122,9 +149,9 @@ export function HomeNav({
 
               <div className={cx(styles.navDropdown, dropdownOpen && styles.navDropdownOpen)}>
                 <div className={styles.navDropdownHeader}>
-                  {accountData.avatarUrl ? (
+                  {accountData.avatarUrl && !avatarError ? (
                     // eslint-disable-next-line @next/next/no-img-element
-                    <img src={accountData.avatarUrl} alt="" className={styles.navDropdownAvatar} />
+                    <img src={accountData.avatarUrl} alt="" className={styles.navDropdownAvatar} onError={() => setAvatarError(true)} />
                   ) : (
                     <div className={styles.navDropdownAvatarPlaceholder}>{initials}</div>
                   )}
@@ -142,7 +169,7 @@ export function HomeNav({
                   onClick={() => { setDropdownOpen(false); onOpenDashboard(); }}
                 >
                   <span className={styles.navDropdownItemIcon}>⬡</span>
-                  Dashboard
+                  {t("nav_dashboard")}
                 </button>
 
                 <button
@@ -151,7 +178,7 @@ export function HomeNav({
                   onClick={() => { setDropdownOpen(false); onOpenSettings(); }}
                 >
                   <span className={styles.navDropdownItemIcon}>◈</span>
-                  Settings
+                  {t("nav_settings")}
                 </button>
 
                 {isAdmin ? (
@@ -161,7 +188,7 @@ export function HomeNav({
                     onClick={() => { setDropdownOpen(false); onOpenAdmin(); }}
                   >
                     <span className={styles.navDropdownItemIcon}>⬡</span>
-                    Admin Panel
+                    {t("nav_admin")}
                   </button>
                 ) : null}
 
@@ -173,18 +200,18 @@ export function HomeNav({
                   onClick={() => { setDropdownOpen(false); onLogout(); }}
                 >
                   <span className={styles.navDropdownItemIcon}>→</span>
-                  Sign out
+                  {t("nav_signout")}
                 </button>
               </div>
             </div>
           ) : (
             <button type="button" className={styles.navGhost} onClick={onOpenCabinet}>
-              Sign In
+              {t("nav_signin")}
             </button>
           )}
 
           <button type="button" className={styles.navCta} onClick={onInstall}>
-            Install
+            {t("nav_install")}
           </button>
         </div>
       </div>
