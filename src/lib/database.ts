@@ -490,10 +490,11 @@ export const database = {
     const ext = contentType.split("/")[1] ?? "jpg";
     const path = `${userId}.${ext}`;
 
+    // Use PUT for reliable upsert (POST can 409 if the file already exists)
     const response = await fetch(
       `${SUPABASE_URL}/storage/v1/object/avatars/${path}`,
       {
-        method: "POST",
+        method: "PUT",
         headers: {
           Authorization: `Bearer ${SUPABASE_SERVICE_ROLE_KEY}`,
           "Content-Type": contentType,
@@ -508,7 +509,8 @@ export const database = {
       throw new Error(`Avatar upload failed: ${response.status} ${text}`);
     }
 
-    return `${SUPABASE_URL}/storage/v1/object/public/avatars/${path}`;
+    // Append cache-busting timestamp so browsers don't serve stale images
+    return `${SUPABASE_URL}/storage/v1/object/public/avatars/${path}?t=${Date.now()}`;
   },
 
   async deleteUser(userId: string): Promise<void> {
