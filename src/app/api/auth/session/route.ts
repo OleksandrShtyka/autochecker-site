@@ -1,33 +1,8 @@
-import { NextResponse } from "next/server";
-import { clearSessionCookie, getSession } from "@/lib/auth";
-import { database } from "@/lib/database";
+import { type NextRequest } from "next/server";
+import { proxyToGo } from "@/lib/goProxy";
 
 export const runtime = "nodejs";
 
-export async function GET() {
-  try {
-    const session = await getSession();
-    if (!session) {
-      return NextResponse.json({ authenticated: false });
-    }
-
-    const user = await database.findUserById(session.id);
-    if (!user) {
-      const response = NextResponse.json({ authenticated: false });
-      clearSessionCookie(response);
-      return response;
-    }
-
-    return NextResponse.json({
-      authenticated: true,
-      user: {
-        id: user.id,
-        email: user.email,
-        name: user.name,
-        role: user.role,
-      },
-    });
-  } catch {
-    return NextResponse.json({ authenticated: false });
-  }
+export async function GET(req: NextRequest) {
+  return proxyToGo(req, "/api/auth/session");
 }
