@@ -705,6 +705,58 @@ export const database = {
     );
   },
 
+  // ── Subscriptions ──────────────────────────────────────────
+
+  async getSubscription(userId: string): Promise<{
+    plan: string; status: string; expiresAt: string | null;
+  } | null> {
+    try {
+      const { data } = await supabaseRequest<{
+        plan: string; status: string; expires_at: string | null;
+      }[]>(
+        `subscriptions?user_id=eq.${encodeURIComponent(userId)}&select=plan,status,expires_at&limit=1`,
+        {}
+      );
+      const r = data?.[0];
+      if (!r) return null;
+      return { plan: r.plan, status: r.status, expiresAt: r.expires_at };
+    } catch {
+      return null;
+    }
+  },
+
+  async upsertSubscription(
+    userId: string,
+    plan: string,
+    expiresAt: string | null,
+    paypalOrderId?: string,
+  ): Promise<void> {
+    await supabaseRequest(
+      "subscriptions",
+      {
+        method: "POST",
+        body: JSON.stringify({
+          user_id: userId,
+          plan,
+          status: "active",
+          started_at: new Date().toISOString(),
+          expires_at: expiresAt,
+          paypal_order_id: paypalOrderId ?? null,
+          updated_at: new Date().toISOString(),
+        }),
+      },
+      { prefer: "resolution=merge-duplicates", allowEmpty: true }
+    );
+  },
+
+  async activateTrial(userId: string): Promise<void> {
+    // Check if trial was already used
+    const existing = await database.getSubscription(userId);
+    if (existing) return; // already has a subscription
+    const expiresAt = new Date(Date.now() + 15 * 24 * 60 * 60 * 1000).toISOString();
+    await database.upsertSubscription(userId, "trial", expiresAt);
+  },
+
   async getGymRoi(userId: string, month: string): Promise<GymRoi | null> {
     const { data } = await supabaseRequest<{
       sessions_count: number; monthly_cost: number; cost_per_session: number;
