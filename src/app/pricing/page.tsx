@@ -1,7 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState, useCallback } from "react";
-import Script from "next/script";
+import { useEffect, useState } from "react";
 
 // ── Types ──────────────────────────────────────────────────────────────────────
 interface Plan {
@@ -88,24 +87,13 @@ const PREMIUM_FEATURES = [
   { icon: "∞", text: "Unlimited AI messages" },
 ];
 
-declare global {
-  interface Window {
-    paypal?: {
-      Buttons: (opts: object) => { render: (el: HTMLElement) => void; close: () => void };
-    };
-  }
-}
-
 // ── Main Page ──────────────────────────────────────────────────────────────────
 export default function PricingPage() {
-  const [selectedPlan, setSelectedPlan] = useState<string | null>(null);
-  const [paypalReady, setPaypalReady] = useState(false);
+  const [buyingPlan, setBuyingPlan] = useState<string | null>(null);
   const [status, setStatus] = useState<"idle" | "loading" | "success" | "error">("idle");
   const [message, setMessage] = useState("");
   const [trialUsed, setTrialUsed] = useState(false);
   const [subStatus, setSubStatus] = useState<{ isPremium: boolean; plan?: string; expiresAt?: string | null } | null>(null);
-  const paypalContainerRefs = useRef<Record<string, HTMLDivElement | null>>({});
-  const paypalInstances = useRef<Record<string, ReturnType<NonNullable<Window["paypal"]>["Buttons"]>>>({});
 
   // ── Load subscription status ────────────────────────────────────────────────
   useEffect(() => {
@@ -118,80 +106,67 @@ export default function PricingPage() {
       .catch(() => {});
   }, []);
 
-  // ── Check URL params for payment result ────────────────────────────────────
+  // ── Check URL params — auto-capture after PayPal redirect ──────────────────
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const payment = params.get("payment");
     const plan = params.get("plan");
-    if (payment === "success" && plan) {
-      setStatus("success");
-      setMessage(`✅ Payment confirmed! Your ${PLANS.find(p => p.id === plan)?.label ?? plan} plan is now active.`);
+    const token = params.get("token"); // PayPal order ID after redirect
+
+    if (payment === "success" && plan && token) {
+      // Capture the payment server-side
+      setStatus("loading");
+      setBuyingPlan(plan);
+      fetch("/api/payments/paypal/capture-order", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ orderId: token, plan }),
+      })
+        .then((r) => r.json())
+        .then((d: { success?: boolean; message?: string }) => {
+          if (d.success) {
+            setStatus("success");
+            setMessage(`✅ Welcome to Premium! Your ${PLANS.find(p => p.id === plan)?.label ?? plan} plan is active.`);
+            setSubStatus({ isPremium: true, plan });
+            // Clean URL so refresh doesn't re-capture
+            window.history.replaceState({}, "", "/pricing?payment=success&plan=" + plan);
+          } else {
+            setStatus("error");
+            setMessage(d.message ?? "Capture failed. Contact support.");
+          }
+        })
+        .catch(() => {
+          setStatus("error");
+          setMessage("Network error during capture.");
+        });
     } else if (payment === "cancelled") {
       setMessage("Payment cancelled. No charge was made.");
     }
   }, []);
 
-  // ── Render PayPal button for a plan ────────────────────────────────────────
-  const renderPayPalButton = useCallback((plan: Plan) => {
-    if (!window.paypal || !paypalContainerRefs.current[plan.id]) return;
-    if (paypalInstances.current[plan.id]) {
-      try { paypalInstances.current[plan.id].close(); } catch {}
-    }
-
-    const container = paypalContainerRefs.current[plan.id]!;
-    container.innerHTML = "";
-
-    const btn = window.paypal.Buttons({
-      style: {
-        layout: "vertical",
-        color: "gold",
-        shape: "pill",
-        label: "pay",
-        height: 44,
-      },
-      createOrder: async () => {
-        const res = await fetch("/api/payments/paypal/create-order", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ plan: plan.id }),
-        });
-        const data = await res.json() as { orderId?: string; message?: string };
-        if (!data.orderId) throw new Error(data.message ?? "Failed to create order");
-        return data.orderId;
-      },
-      onApprove: async (data: { orderID: string }) => {
-        setStatus("loading");
-        setSelectedPlan(plan.id);
-        const res = await fetch("/api/payments/paypal/capture-order", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ orderId: data.orderID, plan: plan.id }),
-        });
-        const result = await res.json() as { success?: boolean; message?: string };
-        if (result.success) {
-          setStatus("success");
-          setMessage(`✅ Welcome to Premium! Your ${plan.label} plan is active.`);
-          setSubStatus({ isPremium: true, plan: plan.id });
-        } else {
-          setStatus("error");
-          setMessage(result.message ?? "Something went wrong.");
-        }
-      },
-      onError: () => {
+  // ── Pay with PayPal — redirect flow ────────────────────────────────────────
+  const payWithPayPal = async (plan: Plan) => {
+    setBuyingPlan(plan.id);
+    setStatus("loading");
+    try {
+      const res = await fetch("/api/payments/paypal/create-order", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ plan: plan.id }),
+      });
+      const data = await res.json() as { orderId?: string; approveUrl?: string; message?: string };
+      if (!data.approveUrl) {
         setStatus("error");
-        setMessage("PayPal error. Please try again.");
-      },
-    });
-
-    btn.render(container);
-    paypalInstances.current[plan.id] = btn;
-  }, []);
-
-  // ── Re-render buttons when PayPal loads ────────────────────────────────────
-  useEffect(() => {
-    if (!paypalReady) return;
-    PLANS.forEach((plan) => renderPayPalButton(plan));
-  }, [paypalReady, renderPayPalButton]);
+        setMessage(data.message ?? "Could not create PayPal order.");
+        return;
+      }
+      window.location.href = data.approveUrl;
+    } catch {
+      setStatus("error");
+      setMessage("Network error. Please try again.");
+      setBuyingPlan(null);
+    }
+  };
 
   // ── Trial handler ──────────────────────────────────────────────────────────
   const startTrial = async () => {
@@ -214,16 +189,8 @@ export default function PricingPage() {
     }
   };
 
-  const clientId = process.env.NEXT_PUBLIC_PAYPAL_CLIENT_ID ?? "sb";
-
   return (
     <>
-      <Script
-        src={`https://www.paypal.com/sdk/js?client-id=${clientId}&currency=USD&intent=capture`}
-        onLoad={() => setPaypalReady(true)}
-        strategy="afterInteractive"
-      />
-
       <div style={styles.page}>
         {/* Animated background */}
         <div style={styles.bg}>
@@ -294,7 +261,7 @@ export default function PricingPage() {
               onClick={startTrial}
               disabled={status === "loading"}
             >
-              {status === "loading" && selectedPlan === null
+              {status === "loading" && buyingPlan === null
                 ? "Activating…"
                 : "🎁 Start 15-Day Free Trial — No Credit Card"}
             </button>
@@ -337,24 +304,23 @@ export default function PricingPage() {
           <h2 style={styles.sectionTitle}>Choose Your Plan</h2>
           <div style={styles.plansGrid}>
             {PLANS.map((plan) => {
-              const isSelected = selectedPlan === plan.id;
+              const isBuying = buyingPlan === plan.id;
               const isBest = plan.badge === "BEST VALUE";
               return (
                 <div
                   key={plan.id}
                   style={{
                     ...styles.planCard,
-                    borderColor: isSelected ? plan.color : isBest
+                    borderColor: isBuying ? plan.color : isBest
                       ? `${plan.color}66`
                       : "rgba(255,255,255,0.10)",
-                    boxShadow: isSelected
+                    boxShadow: isBuying
                       ? `0 0 40px ${plan.glow}, 0 8px 32px rgba(0,0,0,0.4)`
                       : isBest
                       ? `0 0 24px ${plan.glow}88, 0 4px 16px rgba(0,0,0,0.3)`
                       : "0 4px 16px rgba(0,0,0,0.25)",
-                    transform: isSelected ? "translateY(-6px) scale(1.02)" : isBest ? "translateY(-3px)" : "none",
+                    transform: isBuying ? "translateY(-6px) scale(1.02)" : isBest ? "translateY(-3px)" : "none",
                   }}
-                  onClick={() => setSelectedPlan(plan.id)}
                 >
                   {plan.badge && (
                     <div
@@ -386,16 +352,19 @@ export default function PricingPage() {
                     </div>
                   )}
 
-                  <div
-                    style={styles.paypalWrap}
-                    ref={(el) => {
-                      paypalContainerRefs.current[plan.id] = el;
+                  <button
+                    style={{
+                      ...styles.paypalBtn,
+                      opacity: status === "loading" && buyingPlan === plan.id ? 0.6 : 1,
+                      cursor: status === "loading" && buyingPlan === plan.id ? "not-allowed" : "pointer",
                     }}
-                  />
-
-                  {!paypalReady && (
-                    <div style={styles.paypalLoading}>Loading payment…</div>
-                  )}
+                    onClick={(e) => { e.stopPropagation(); payWithPayPal(plan); }}
+                    disabled={status === "loading" && buyingPlan === plan.id}
+                  >
+                    {status === "loading" && buyingPlan === plan.id
+                      ? "Redirecting…"
+                      : "💳 Pay with PayPal"}
+                  </button>
                 </div>
               );
             })}
@@ -799,15 +768,18 @@ const styles: Record<string, React.CSSProperties> = {
     fontSize: 11,
     fontWeight: 700,
   },
-  paypalWrap: {
-    marginTop: 12,
-    minHeight: 44,
-  },
-  paypalLoading: {
-    textAlign: "center",
-    fontSize: 12,
-    color: "#64748B",
+  paypalBtn: {
+    marginTop: 14,
+    width: "100%",
     padding: "12px 0",
+    background: "#0070BA",
+    color: "#fff",
+    border: "none",
+    borderRadius: 50,
+    fontSize: 14,
+    fontWeight: 700,
+    cursor: "pointer",
+    transition: "opacity 0.2s",
   },
   metricsGrid: {
     display: "grid",

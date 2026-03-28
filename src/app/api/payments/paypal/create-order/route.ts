@@ -81,8 +81,12 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ message: "PayPal error" }, { status: 502 });
     }
 
-    const order = (await res.json()) as { id: string };
-    return NextResponse.json({ orderId: order.id });
+    const order = (await res.json()) as {
+      id: string;
+      links: { rel: string; href: string }[];
+    };
+    const approveUrl = order.links.find((l) => l.rel === "approve")?.href ?? null;
+    return NextResponse.json({ orderId: order.id, approveUrl });
   } catch (err) {
     console.error("create-order:", err);
     return NextResponse.json({ message: "Server error" }, { status: 500 });
