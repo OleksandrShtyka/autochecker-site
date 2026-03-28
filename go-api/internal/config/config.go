@@ -28,8 +28,8 @@ func Load() {
 		SessionSecret:      mustEnv("SESSION_SECRET"),
 		GroqAPIKey:         mustEnv("GROQ_API_KEY"),
 		AdminEmail:         getEnv("ADMIN_EMAIL", ""),
-		PayPalClientID:     mustEnv("PAYPAL_CLIENT_ID"),
-		PayPalClientSecret: mustEnv("PAYPAL_CLIENT_SECRET"),
+		PayPalClientID:     getEnv("PAYPAL_CLIENT_ID", ""),
+		PayPalClientSecret: getEnv("PAYPAL_CLIENT_SECRET", ""),
 		PayPalMode:         getEnv("PAYPAL_MODE", "sandbox"),
 		SiteURL:            getEnv("SITE_URL", "https://autochecker-site.vercel.app"),
 	}
