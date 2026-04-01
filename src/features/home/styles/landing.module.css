@@ -46,8 +46,7 @@
   border-radius: 50%;
   background: var(--accent-a);
   color: var(--accent-a);
-  box-shadow: 0 0 10px currentColor;
-  animation: pulse 2.4s ease-in-out infinite;
+  box-shadow: 0 0 8px currentColor;
 }
 
 .heroTitle {
@@ -92,7 +91,6 @@
   background: var(--chip-bg);
   border: 1px solid var(--surface-border);
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.22), 0 2px 8px rgba(0, 0, 0, 0.04);
-  animation: floatSlow 8s ease-in-out infinite;
 }
 
 .main[data-theme="dark"] .heroBadge,
@@ -108,9 +106,6 @@
   box-shadow: var(--surface-shadow);
 }
 
-.quickPill:nth-child(2) { animation-delay: 1.4s; }
-.quickPill:nth-child(3) { animation-delay: 2.8s; }
-.quickPill:nth-child(4) { animation-delay: 4.2s; }
 
 .featureDock {
   margin-top: 1.6rem;
